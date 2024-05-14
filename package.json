@@ -8,7 +8,7 @@
         "dev": "nodemon --env-file=dev.env index.js",
         "socket": "nodemon index-socket.js",
         "noti-socket": "nodemon --env-file=dev.env noti-socket.js",
-        "start": "node --env-file=production.env index.js",
+        "start": "node --env-file=dev.env index.js",
         "test": "echo \"Error: no test specified\" && exit 1"
     },
     "keywords": [],

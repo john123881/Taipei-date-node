@@ -822,11 +822,11 @@ app.use(
 app.use('/', express.static('public'));
 
 // 建立HTTPS伺服器
-const server = https.createServer(options, app);
+// const server = https.createServer(options, app);
 
-server.listen(3443, () =>
-    console.log(`Server Started at https://localhost:3443`)
-);
+// server.listen(3443, () =>
+//     console.log(`Server Started at https://localhost:3443`)
+// );
 
 // server 偵聽
 const port = process.env.WEB_PORT || 3002;
