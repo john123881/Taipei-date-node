@@ -229,98 +229,98 @@ router.post('/friendships_message/api', async (req, res) => {
 
 // 新增圖片
 // 設定 multer 儲存選項
-const storage = multer.diskStorage({
-    destination: 'tmp/messageImage',
-    filename: (req, file, cb) => {
-        cb(null, file.originalname); // 使用原始文件名
-    },
-});
+// const storage = multer.diskStorage({
+//     destination: 'tmp/messageImage',
+//     filename: (req, file, cb) => {
+//         cb(null, file.originalname); // 使用原始文件名
+//     },
+// });
 
-const upload = multer({ storage });
+// const upload = multer({ storage });
 
-router.post(
-    '/friendships_message/uploadImg/api',
-    upload.single('file'),
-    async (req, res) => {
-        console.log('Received request:', req.body, 'File:', req.file);
+// router.post(
+//     '/friendships_message/uploadImg/api',
+//     upload.single('file'),
+//     async (req, res) => {
+//         console.log('Received request:', req.body, 'File:', req.file);
 
-        const output = {
-            success: false,
-            bodyData: { body: req.body, file: req.file },
-            errors: {},
-        };
+//         const output = {
+//             success: false,
+//             bodyData: { body: req.body, file: req.file },
+//             errors: {},
+//         };
 
-        // 欄位資料檢查
-        const schemaFriendshipId = z
-            .number()
-            .int()
-            .min(1, { message: 'FriendshipId須為大於等於1的整數' });
-        const schemaSenderId = z
-            .number()
-            .int()
-            .min(1, { message: 'SenderId須為大於等於1的整數' });
-        const schemaContent = z.string().min(1, { message: 'Content不能為空' });
+//         // 欄位資料檢查
+//         const schemaFriendshipId = z
+//             .number()
+//             .int()
+//             .min(1, { message: 'FriendshipId須為大於等於1的整數' });
+//         const schemaSenderId = z
+//             .number()
+//             .int()
+//             .min(1, { message: 'SenderId須為大於等於1的整數' });
+//         const schemaContent = z.string().min(1, { message: 'Content不能為空' });
 
-        const checkFriendshipId = schemaFriendshipId.safeParse(
-            req.body.friendship_id
-        );
-        const checkSenderId = schemaSenderId.safeParse(req.body.sender_id);
-        const checkContent = schemaContent.safeParse(req.body.content);
+//         const checkFriendshipId = schemaFriendshipId.safeParse(
+//             req.body.friendship_id
+//         );
+//         const checkSenderId = schemaSenderId.safeParse(req.body.sender_id);
+//         const checkContent = schemaContent.safeParse(req.body.content);
 
-        if (!checkFriendshipId.success) {
-            output.errors.friendship_id = checkFriendshipId.error.message;
-        }
-        if (!checkSenderId.success) {
-            output.errors.sender_id = checkSenderId.error.message;
-        }
-        if (!checkContent.success) {
-            output.errors.content = checkContent.error.message;
-        }
+//         if (!checkFriendshipId.success) {
+//             output.errors.friendship_id = checkFriendshipId.error.message;
+//         }
+//         if (!checkSenderId.success) {
+//             output.errors.sender_id = checkSenderId.error.message;
+//         }
+//         if (!checkContent.success) {
+//             output.errors.content = checkContent.error.message;
+//         }
 
-        // 如果有圖片，將其 URL 放入 content
-        let content = req.body.content || '';
-        if (req.file) {
-            const imageUrl = `http://localhost:${process.env.WEB_PORT}/messageImage/${req.file.filename}`;
-            content += ` ${imageUrl}`; // 在 content 中添加圖片 URL
-        }
+//         // 如果有圖片，將其 URL 放入 content
+//         let content = req.body.content || '';
+//         if (req.file) {
+//             const imageUrl = `http://localhost:${process.env.WEB_PORT}/messageImage/${req.file.filename}`;
+//             content += ` ${imageUrl}`; // 在 content 中添加圖片 URL
+//         }
 
-        // 如果通過了所有檢查，則執行插入資料
-        try {
-            const friendship_id = req.body.friendship_id;
-            const sender_id = req.body.sender_id;
-            const sended_at = new Date();
-            const msg_type = 'I';
+//         // 如果通過了所有檢查，則執行插入資料
+//         try {
+//             const friendship_id = req.body.friendship_id;
+//             const sender_id = req.body.sender_id;
+//             const sended_at = new Date();
+//             const msg_type = 'I';
 
-            const sql = `INSERT INTO friendships_message (friendship_id, sender_id, msg_type, content, sended_at) VALUES (?, ?, ?, ?, ?)`;
+//             const sql = `INSERT INTO friendships_message (friendship_id, sender_id, msg_type, content, sended_at) VALUES (?, ?, ?, ?, ?)`;
 
-            const [result] = await db.query(sql, [
-                friendship_id,
-                sender_id,
-                msg_type,
-                content,
-                sended_at,
-            ]);
+//             const [result] = await db.query(sql, [
+//                 friendship_id,
+//                 sender_id,
+//                 msg_type,
+//                 content,
+//                 sended_at,
+//             ]);
 
-            // 處理時間格式
-            const formattedSendAt = dayjs(sended_at).format(
-                'YYYY-MM-DD HH:mm:ss'
-            );
+//             // 處理時間格式
+//             const formattedSendAt = dayjs(sended_at).format(
+//                 'YYYY-MM-DD HH:mm:ss'
+//             );
 
-            if (result.affectedRows > 0) {
-                output.success = true;
-                output.friendship_id = result.insertId;
-                output.sender_id = result.sender_id;
-                output.content = content;
-                output.sended_at = formattedSendAt;
-            }
-        } catch (ex) {
-            console.error('Database query error:', ex);
-            output.errors.database = '資料庫出錯';
-        }
+//             if (result.affectedRows > 0) {
+//                 output.success = true;
+//                 output.friendship_id = result.insertId;
+//                 output.sender_id = result.sender_id;
+//                 output.content = content;
+//                 output.sended_at = formattedSendAt;
+//             }
+//         } catch (ex) {
+//             console.error('Database query error:', ex);
+//             output.errors.database = '資料庫出錯';
+//         }
 
-        res.json(output);
-    }
-);
+//         res.json(output);
+//     }
+// );
 
 // TODO: friendships_message 進階功能 => 針對user刪除對話紀錄
 
