@@ -829,7 +829,7 @@ app.use('/', express.static('public'));
 // );
 
 // server 偵聽
-const port = process.env.WEB_PORT || 3002;
+const port = process.env.PORT || 3002;
 app.listen(port, () => {
     console.log(`Server Started at http://localhost:${port}`);
 });
