@@ -830,7 +830,8 @@ app.use('/', express.static('public'));
 
 // server 偵聽
 const port = process.env.PORT || 3002;
-app.listen(port, () => {
+// const host = process.env.DB_HOST || process.env.JAWSDB_HOST || '0.0.0.0';
+app.listen(port, '0.0.0.0', () => {
     console.log(`Server Started at http://localhost:${port}`);
 });
 
