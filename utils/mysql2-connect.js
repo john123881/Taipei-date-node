@@ -1,14 +1,32 @@
 import mysql from 'mysql2/promise';
 
-const { DB_HOST, DB_USER, DB_PASS, DB_NAME } = process.env;
+const {
+    DB_HOST,
+    DB_USER,
+    DB_PASS,
+    DB_NAME,
+    JAWSDB_HOST,
+    JAWSDB_USER,
+    JAWSDB_PASS,
+    JAWSDB_NAME,
+} = process.env;
 
-console.log({ DB_HOST, DB_USER, DB_PASS, DB_NAME });
+console.log({
+    DB_HOST,
+    DB_USER,
+    DB_PASS,
+    DB_NAME,
+    JAWSDB_HOST,
+    JAWSDB_USER,
+    JAWSDB_PASS,
+    JAWSDB_NAME,
+});
 
 const db = mysql.createPool({
-    host: '119.14.42.80',
-    user: 'taipei_date',
-    password: '123456',
-    database: 'taipei_date',
+    host: JAWSDB_HOST,
+    user: JAWSDB_USER,
+    password: JAWSDB_PASS,
+    database: JAWSDB_NAME,
     // 預設是 3306
     // port: 3306,
     waitForConnections: true,
