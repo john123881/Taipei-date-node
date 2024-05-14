@@ -11,16 +11,16 @@ import mysql from 'mysql2/promise';
 //     JAWSDB_NAME,
 // } = process.env;
 
-console.log({
-    DB_HOST,
-    DB_USER,
-    DB_PASS,
-    DB_NAME,
-    JAWSDB_HOST,
-    JAWSDB_USER,
-    JAWSDB_PASS,
-    JAWSDB_NAME,
-});
+// console.log({
+//     DB_HOST,
+//     DB_USER,
+//     DB_PASS,
+//     DB_NAME,
+//     JAWSDB_HOST,
+//     JAWSDB_USER,
+//     JAWSDB_PASS,
+//     JAWSDB_NAME,
+// });
 
 const db = mysql.createPool({
     host: process.env.JAWSDB_HOST,
