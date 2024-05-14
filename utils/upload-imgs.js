@@ -21,7 +21,7 @@ const fileFilter = (req, file, callback) => {
 //Storage 1.存取位置 2.加上檔名
 const storage = multer.diskStorage({
     destination: (req, file, callback)=>{
-        callback(null, "public/avatar/")
+        callback(null, "tmp/avatar/")
     },
     filename: (req, file, callback)=>{
         // 經授權後，req.user帶有會員的id

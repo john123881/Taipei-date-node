@@ -4,7 +4,7 @@ import path from 'path';
 // 設定文件儲存
 const storage = multer.diskStorage({
     destination: (req, file, callback) => {
-        callback(null, 'public/tripcover/');
+        callback(null, 'tmp/tripcover/');
     },
     filename: (req, file, callback) => {
         // 使用日期時間戳和原始文件擴展名生成新的文件名

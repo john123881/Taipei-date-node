@@ -230,7 +230,7 @@ router.post('/friendships_message/api', async (req, res) => {
 // 新增圖片
 // 設定 multer 儲存選項
 const storage = multer.diskStorage({
-    destination: 'public/messageImage',
+    destination: 'tmp/messageImage',
     filename: (req, file, cb) => {
         cb(null, file.originalname); // 使用原始文件名
     },
