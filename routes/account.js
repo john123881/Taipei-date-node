@@ -1,7 +1,8 @@
 import express from 'express';
 import dayjs from 'dayjs';
 import db from '../utils/mysql2-connect.js';
-import upload from '../utils/upload-imgs.js';
+// import upload from '../utils/upload-imgs.js';
+import upload from '../utils/upload-aws-imgs.js';
 import bcrypt from 'bcryptjs';
 
 // 中介軟體，存取隱私會員資料用
@@ -313,12 +314,11 @@ router.post('/try-upload/:sid', upload.single('avatar'), async (req, res) => {
     try {
         if (req.file) {
             let sid = +req.params.sid || 0;
-            const data = { avatar: req.file.filename };
+            // const data = { avatar: req.file.filename };
+            // console.log('大頭照上傳data中的data', data);
+            console.log('大頭照上傳data中的filename', req.file.location);
             const sql = `UPDATE member_user SET avatar = ? WHERE user_id = ?`;
-            const result = await db.query(sql, [
-                `http://localhost:${process.env.WEB_PORT}/avatar/${data.avatar}`,
-                sid,
-            ]);
+            const result = await db.query(sql, [req.file.location, sid]);
             output.success = !!result[0].affectedRows;
             output.msg = output.success ? '照片上傳成功' : '照片上傳失敗';
         } else {
