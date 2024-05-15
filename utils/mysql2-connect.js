@@ -23,10 +23,10 @@ import mysql from 'mysql2/promise';
 // });
 
 const db = mysql.createPool({
-    host: process.env.JAWSDB_HOST,
-    user: process.env.JAWSDB_USER,
-    password: process.env.JAWSDB_PASS,
-    database: process.env.JAWSDB_NAME,
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASS,
+    database: process.env.DB_NAME,
     // 預設是 3306
     // port: 3306,
     waitForConnections: true,
