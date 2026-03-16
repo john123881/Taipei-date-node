@@ -10,7 +10,7 @@ import transporter from './utils/email.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
-import accountRouter from './routes/account.js';
+
 import {
     createOtpForRegister,
     createOtpForPassword,
@@ -32,6 +32,7 @@ import {
     barRouter,
     dateRouter,
     bookingRouter,
+    accountRouter,
 } from './routes/index.js';
 import { optional } from 'zod';
 
@@ -106,7 +107,22 @@ app.use(
     })
 );
 
-app.use('/account', accountRouter);
+// For Account page
+app.use(
+    '/account',
+    accountRouter.addDataRouter,
+    accountRouter.profileRouter,
+    accountRouter.editProfileRouter,
+    accountRouter.uploadAvatarRouter,
+    accountRouter.changePasswordRouter,
+    accountRouter.gameRecordRouter,
+    accountRouter.recordPointRouter,
+    accountRouter.recordGameRouter,
+    accountRouter.collectPostRouter,
+    accountRouter.collectBarRouter,
+    accountRouter.collectMovieRouter,
+    accountRouter.collectListRouter,
+);
 
 //loginCheck
 // 檢查登入狀態用

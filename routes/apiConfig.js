@@ -121,4 +121,23 @@ const booking = {
     getMovieDetail: '/get-movie-detail/:movieId',
 };
 
-export { community, trip, bar, booking };
+const account = {
+    addData: '/add-data',
+    getProfile: '/:sid',
+    getEditProfile: '/edit/:sid',
+    editProfile: '/edit/:sid',
+    uploadAvatar: '/try-upload/:sid',
+    changePassword: '/change-password/:sid',
+    gameRecordUpload: '/game-record-upload/:sid',
+    recordPoint: '/record-point/:sid',
+    recordGame: '/record-game/:sid',
+    collectPost: '/collect-post/:sid',
+    collectPostDelete: '/collect-post-delete/:save_id',
+    collectBar: '/collect-bar/:sid',
+    collectBarDelete: '/collect-bar-delete/:save_id',
+    collectMovie: '/collect-movie/:sid',
+    collectMovieDelete: '/collect-movie-delete/:save_id',
+    collectList: '/collect-list/:sid',
+};
+
+export { community, trip, bar, booking, account };

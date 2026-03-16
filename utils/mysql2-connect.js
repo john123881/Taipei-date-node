@@ -27,8 +27,7 @@ const db = mysql.createPool({
     user: process.env.DB_USER,
     password: process.env.DB_PASS,
     database: process.env.DB_NAME,
-    // 預設是 3306
-    // port: 3306,
+    port: process.env.DB_PORT || 3306,
     waitForConnections: true,
     connectionLimit: 5,
     queueLimit: 0,
