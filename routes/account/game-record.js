@@ -1,18 +1,18 @@
 import express from 'express';
+import dayjs from 'dayjs';
 import { account } from '../apiConfig.js';
-import db from '../../utils/mysql2-connect.js';
+import prisma from '../../utils/prisma-client.js';
 import authenticate from '../../middlewares/authenticate.js';
 
 const gameRecordRouter = express.Router();
 
 //遊戲 - 紀錄上傳 - 新增 POST
 gameRecordRouter.post(account.gameRecordUpload, authenticate, async (req, res) => {
-    // authenticate : 授權後，!req.my_jwt?.id判斷有無授權成功
     let { gameScore, formattedTime } = req.body;
 
     const output = {
         success: false,
-        action: '', // add, remove
+        action: '',
         error: '',
         code: 0,
         getPointPlay: false,
@@ -27,42 +27,57 @@ gameRecordRouter.post(account.gameRecordUpload, authenticate, async (req, res) =
     let sid = +req.my_jwt.id || 0;
 
     try {
-        const sql = `INSERT INTO member_game_record (user_id, game_score, game_time) VALUES (?, ?, ?) `;
-        const [result] = await db.query(sql, [sid, gameScore, formattedTime]);
-        // console.log(!!result.affectedRows);
-        if (!result.affectedRows) {
+        // 1. 新增遊戲紀錄
+        // 注意: schema 中 game_time 是 DateTime @db.Time(0)，
+        // formattedTime 需要是有效的 Date 物件或符合格式
+        const gameRecord = await prisma.member_game_record.create({
+            data: {
+                user_id: sid,
+                game_score: gameScore,
+                game_time: new Date(`1970-01-01T${formattedTime}Z`), // 假設格式為 HH:mm:ss
+            }
+        });
+
+        if (!gameRecord) {
             output.error = '新增記錄失敗';
             return res.json(output);
-        } else {
-            //今天第一次玩獲得積分:
-            const sqlGetFromPlayEveryday = `SELECT COUNT(*) AS count FROM member_points_inc WHERE user_id = ? AND reason = '遊玩遊戲' AND DATE(created_at) = CURDATE() `;
-            const [countGetFromPlayEveryday] = await db.query(
-                sqlGetFromPlayEveryday,
-                [sid]
-            );
+        }
 
-            if (
-                countGetFromPlayEveryday.length > 0 &&
-                countGetFromPlayEveryday[0].count > 0
-            ) {
-                // console.log(
-                //     `User ${sid} has already received points from playing today.`
-                // );
-            } else {
-                //今天第一次遊玩，拿到積分
-                const sqlSetPointFromLogin = `INSERT INTO member_points_inc (user_id, points_increase, reason, created_at)
-                VALUES (?, 10, '遊玩遊戲', NOW());`;
-                const [setPoint] = await db.query(sqlSetPointFromLogin, [sid]);
-                output.getPointPlay = true;
-                // console.log(`User ${sid} get points from playing!!`);
+        // 2. 檢查今天是否已獲得遊戲積分
+        const todayStart = dayjs().startOf('day').toDate();
+        const nextDayStart = dayjs().add(1, 'day').startOf('day').toDate();
+
+        const countTodayPlayPoints = await prisma.member_points_inc.count({
+            where: {
+                user_id: sid,
+                reason: '遊玩遊戲',
+                created_at: {
+                    gte: todayStart,
+                    lt: nextDayStart
+                }
             }
+        });
+
+        if (countTodayPlayPoints === 0) {
+            // 今天第一次遊玩，給予積分
+            await prisma.member_points_inc.create({
+                data: {
+                    user_id: sid,
+                    points_increase: 10,
+                    reason: '遊玩遊戲',
+                    created_at: new Date()
+                }
+            });
+            output.getPointPlay = true;
         }
 
         output.code = 200;
-        output.success = !!result.affectedRows;
+        output.success = true;
         res.json(output);
+
     } catch (error) {
-        console.log('game-record-error:', error);
+        console.error('Game Record Upload Error:', error);
+        res.status(500).json({ success: false, error: '伺服器內部錯誤' });
     }
 });
 

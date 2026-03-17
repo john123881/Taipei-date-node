@@ -1,11 +1,11 @@
 import express from 'express';
 import { account } from '../apiConfig.js';
-import db from '../../utils/mysql2-connect.js';
+import prisma from '../../utils/prisma-client.js';
 import authenticate from '../../middlewares/authenticate.js';
 
 const collectListRouter = express.Router();
 
-//Navbar收藏列表
+// Navbar收藏列表 (整合 貼文、酒吧、電影)
 collectListRouter.get(account.collectList, authenticate, async (req, res) => {
     const output = {
         success: false,
@@ -23,117 +23,130 @@ collectListRouter.get(account.collectList, authenticate, async (req, res) => {
         }
         const sid = parseInt(req.params.sid) || 0;
 
-        let rows = [];
-        //放入SQL
-        const query = `
-            (
-                SELECT
-                    posts.user_id AS author_id,
-                    author.email AS author_email,
-                    author.avatar AS author_avatar,
-                    users.user_id,
-                    users.username,
-                    users.email,
-                    comm_saved.comm_saved_id AS saved_id,
-                    comm_saved.post_id AS item_id,
-                    comm_saved.created_at AS created_at,
-                    pic.img AS img,
-                    pic.photo_name AS img_name,
-                CASE
-                    WHEN author.username IS NOT NULL THEN author.username
-                    ELSE 'Unknown'
-                END AS title,
-                    COALESCE(likes.likes_count, 0) AS subtitle,
-                    posts.context AS content,
-                    NULL AS rating,
-                    'post' AS item_type
-                FROM member_user AS users
-                LEFT JOIN comm_saved ON users.user_id = comm_saved.user_id
-                LEFT JOIN comm_photo AS pic ON pic.post_id = comm_saved.post_id
-                LEFT JOIN comm_post AS posts ON posts.post_id = comm_saved.post_id
-                LEFT JOIN member_user AS author ON posts.user_id = author.user_id
-                LEFT JOIN (
-                SELECT post_id, COUNT(*) AS likes_count
-                FROM comm_likes
-                GROUP BY post_id
-            ) AS likes ON posts.post_id = likes.post_id
-                WHERE users.user_id = ${sid}
-            UNION
-                SELECT
-                NULL AS author_id,
-                NULL AS author_email,
-                NULL AS author_avatar,
-                    users.user_id,
-                    users.username,
-                    users.email,
-                    bar_saved.bar_saved_id AS saved_id,
-                    bar_saved.bar_id AS item_id,
-                    bar_saved.created_at AS created_at,
-                    pic.bar_img AS img,
-                    pic.bar_pic_name AS img_name,
-                    bars.bar_name AS title,
-                    bars.bar_addr AS subtitle,
-                    bars.bar_description AS content,
-                    NULL AS rating,
-                    'bar' AS item_type
-                FROM member_user AS users
-                LEFT JOIN bar_saved ON users.user_id = bar_saved.user_id
-                LEFT JOIN bar_pic AS pic ON pic.bar_id = bar_saved.bar_id
-                LEFT JOIN bars AS bars ON bars.bar_id = bar_saved.bar_id
-                WHERE users.user_id = ${sid}
-            UNION
-                SELECT
-                NULL AS author_id,
-                NULL AS author_email,
-                NULL AS author_avatar,
-                    users.user_id,
-                    users.username,
-                    users.email,
-                    movie_saved.booking_movie_saved_id AS saved_id,
-                    movie_saved.movie_id AS item_id,
-                    movie_saved.created_at AS created_at,
-                    movies.movie_img AS img,
-                    movies.poster_img AS img_name,
-                    movies.title AS title,
-                    movies_type.movie_type AS subtitle,
-                    movies.movie_description AS content,
-                    movies.movie_rating AS rating,
-                    'movie' AS item_type
-                FROM member_user AS users
-                LEFT JOIN booking_movie_saved AS movie_saved ON users.user_id = movie_saved.user_id
-                LEFT JOIN booking_movie AS movies ON movies.movie_id = movie_saved.movie_id
-                LEFT JOIN booking_movie_type AS movies_type ON movies.movie_type_id = movies_type.movie_type_id
-                WHERE users.user_id = ${sid}
-            )
-            ORDER BY created_at DESC
-            LIMIT 0, 10`;
-        [rows] = await db.query(query);
+        // 由於 Prisma 不支援 UNION，我們分別查詢後在 JS 層合併並排序
+        
+        // 1. 查詢收藏的貼文 (最新 10 筆)
+        const savedPosts = await prisma.comm_saved.findMany({
+            where: { user_id: sid },
+            orderBy: { created_at: 'desc' },
+            take: 10,
+            include: {
+                comm_post: {
+                    include: {
+                        member_user: true,
+                        comm_photo: { select: { img: true, photo_name: true }, take: 1 },
+                        comm_likes: true // 用於計算讚數
+                    }
+                }
+            }
+        });
 
-        //沒筆數的話 輸出error 無相關紀錄
-        if (rows.length === 0) {
-            output.code = 440;
-            output.error = '無收藏';
-            output.data = [];
-            return res.json({ success: false, output });
+        // 2. 查詢收藏的酒吧 (最新 10 筆)
+        const savedBars = await prisma.bar_saved.findMany({
+            where: { user_id: sid },
+            orderBy: { created_at: 'desc' },
+            take: 10,
+            include: {
+                bars: {
+                    include: {
+                        bar_pic: { select: { bar_img: true, bar_pic_name: true }, take: 1 }
+                    }
+                }
+            }
+        });
+
+        // 3. 查詢收藏的電影 (最新 10 筆)
+        const savedMovies = await prisma.booking_movie_saved.findMany({
+            where: { user_id: sid },
+            orderBy: { created_at: 'desc' },
+            take: 10
+        });
+        
+        // 電影暫時需要手動抓取詳情 (若 schema 沒關聯)
+        const moviesWithDetails = [];
+        for(const m of savedMovies) {
+            const detail = await prisma.booking_movie.findUnique({
+                where: { movie_id: m.movie_id },
+                include: { booking_movie_type: true }
+            });
+            moviesWithDetails.push({ ...m, detail });
         }
 
-        //把圖片轉檔
-        const lists = rows.map((list) => {
-            if (list.img) {
-                const imageBase64 = Buffer.from(list.img).toString('base64');
-                return {
-                    ...list,
-                    img: `data:image/jpeg;base64,${imageBase64}`,
-                };
-            }
+        // 4. 對應回原本資料格式並合併
+        const listItems = [
+            ...savedPosts.map(p => ({
+                author_id: p.comm_post?.user_id || null,
+                author_email: p.comm_post?.member_user?.email || null,
+                author_avatar: p.comm_post?.member_user?.avatar || null,
+                user_id: p.user_id,
+                username: p.comm_post?.member_user?.username || 'Unknown',
+                email: p.comm_post?.member_user?.email || null,
+                saved_id: p.comm_saved_id,
+                item_id: p.post_id,
+                created_at: p.created_at,
+                img: p.comm_post?.comm_photo?.[0]?.img || null,
+                img_name: p.comm_post?.comm_photo?.[0]?.photo_name || null,
+                title: p.comm_post?.member_user?.username || 'Unknown',
+                subtitle: p.comm_post?.comm_likes?.length || 0,
+                content: p.comm_post?.context,
+                rating: null,
+                item_type: 'post'
+            })),
+            ...savedBars.map(b => ({
+                author_id: null,
+                author_email: null,
+                author_avatar: null,
+                user_id: b.user_id,
+                username: null, // 原 SQL 中 users.username 代表的是收藏者的名稱
+                email: null,
+                saved_id: b.bar_saved_id,
+                item_id: b.bar_id,
+                created_at: b.created_at,
+                img: b.bars?.bar_pic?.[0]?.bar_img || null,
+                img_name: b.bars?.bar_pic?.[0]?.bar_pic_name || null,
+                title: b.bars?.bar_name,
+                subtitle: b.bars?.bar_addr,
+                content: b.bars?.bar_description,
+                rating: null,
+                item_type: 'bar'
+            })),
+            ...moviesWithDetails.map(m => ({
+                author_id: null,
+                author_email: null,
+                author_avatar: null,
+                user_id: m.user_id,
+                username: null,
+                email: null,
+                saved_id: m.booking_movie_saved_id,
+                item_id: m.movie_id,
+                created_at: m.created_at,
+                img: m.detail?.movie_img || null,
+                img_name: m.detail?.poster_img || null,
+                title: m.detail?.title,
+                subtitle: m.detail?.booking_movie_type?.movie_type,
+                content: m.detail?.movie_description,
+                rating: m.detail?.movie_rating,
+                item_type: 'movie'
+            }))
+        ];
 
-            return list;
-        });
-        //過濾掉沒有save_id的 DATA
-        const listsFiltered = lists.filter((list) => list.saved_id !== null);
+        // 5. 排序、圖片轉檔、過濾
+        const sortedList = listItems
+            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+            .slice(0, 10)
+            .map(item => {
+                if (item.img) {
+                    const imageBase64 = Buffer.from(item.img).toString('base64');
+                    return {
+                        ...item,
+                        img: `data:image/jpeg;base64,${imageBase64}`,
+                    };
+                }
+                return item;
+            });
 
         output.success = true;
-        output.data = listsFiltered;
+        output.data = sortedList;
         output.code = 200;
 
         res.json({
@@ -142,8 +155,9 @@ collectListRouter.get(account.collectList, authenticate, async (req, res) => {
             query: req.query,
             output,
         });
+
     } catch (error) {
-        console.error('Error in collect-list:', error);
+        console.error('Collect List Error:', error);
         output.success = false;
         output.code = 500;
         output.error = '伺服器錯誤';

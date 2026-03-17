@@ -1,6 +1,6 @@
 import express from 'express';
 import { account } from '../apiConfig.js';
-import db from '../../utils/mysql2-connect.js';
+import prisma from '../../utils/prisma-client.js';
 
 const addDataRouter = express.Router();
 
@@ -10,9 +10,9 @@ addDataRouter.post(account.addData, async (req, res) => {
         const dataArray = req.body; // 接收包含物件陣列的請求主體
         const output = {
             success: false,
-            error: '', //錯誤消息存在這裡
+            error: '',
             code: 0,
-            results: [], // 存放每個物件的處理結果
+            results: [],
         };
 
         // 遍歷物件陣列，對每個物件進行處理
@@ -32,60 +32,59 @@ addDataRouter.post(account.addData, async (req, res) => {
                 user_active,
             } = data;
 
-            // 對照資料庫，有無此筆email
-            const sql = 'SELECT * FROM member_user WHERE email = ? ';
-            const [rows] = await db.query(sql, [email]);
-            if (rows.length) {
+            // 1. 檢查 Email 是否已存在
+            const existingEmail = await prisma.member_user.findFirst({
+                where: { email: email }
+            });
+            if (existingEmail) {
                 output.error = '已註冊過此電子郵件';
                 output.code = 470;
                 return res.json(output);
             }
 
-            // 對照資料庫，有無此筆user_id
-            const sql_id = 'SELECT * FROM member_user WHERE user_id = ? ';
-            const [rows_id] = await db.query(sql_id, [user_id]);
-            if (rows_id.length) {
+            // 2. 檢查 UserID 是否已存在
+            const existingId = await prisma.member_user.findUnique({
+                where: { user_id: user_id }
+            });
+            if (existingId) {
                 output.error = '已註冊過此user_id';
                 output.code = 471;
                 return res.json(output);
             }
 
-            // 執行資料庫寫入
-            const sql2 = `INSERT INTO member_user 
-            (avatar, username, email, password_hash, gender, birthday, mobile, bar_type_id, movie_type_id, profile_content) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ? ) `;
-            const [result] = await db.query(sql2, [
-                avatar,
-                username,
-                email,
-                password_hash,
-                gender,
-                birthday,
-                mobile,
-                bar_type_id,
-                movie_type_id,
-                profile_content,
-            ]);
-            console.log('完成SQL query:', result);
+            // 3. 執行資料庫寫入
+            const newUser = await prisma.member_user.create({
+                data: {
+                    avatar,
+                    username,
+                    email,
+                    password_hash,
+                    gender,
+                    birthday: birthday ? new Date(birthday) : null,
+                    mobile,
+                    bar_type_id,
+                    movie_type_id,
+                    profile_content,
+                    user_active: !!user_active
+                }
+            });
 
             output.results.push({
-                // 將處理結果加入到 output 中
                 success: true,
-                username,
-                email,
+                username: newUser.username,
+                email: newUser.email,
             });
         }
 
         output.success = true;
         return res.json(output);
     } catch (ex) {
-        console.log('錯誤:' + ex);
-        const output = {
+        console.error('Add Data Error:', ex);
+        return res.status(500).json({
             success: false,
-            error: '註冊時發生錯誤',
+            error: '註冊時發生錯誤: ' + ex.message,
             code: 500,
-        };
-        return res.json(output);
+        });
     }
 });
 

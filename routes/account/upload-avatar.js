@@ -1,6 +1,6 @@
 import express from 'express';
 import { account } from '../apiConfig.js';
-import db from '../../utils/mysql2-connect.js';
+import prisma from '../../utils/prisma-client.js';
 import upload from '../../utils/upload-aws-imgs.js';
 
 const uploadAvatarRouter = express.Router();
@@ -16,20 +16,28 @@ uploadAvatarRouter.post(account.uploadAvatar, upload.single('avatar'), async (re
     try {
         if (req.file) {
             let sid = +req.params.sid || 0;
-            // const data = { avatar: req.file.filename };
-            // console.log('大頭照上傳data中的data', data);
-            console.log('大頭照上傳data中的filename', req.file.location);
-            const sql = `UPDATE member_user SET avatar = ? WHERE user_id = ?`;
-            const result = await db.query(sql, [req.file.location, sid]);
-            output.success = !!result[0].affectedRows;
-            output.msg = output.success ? '照片上傳成功' : '照片上傳失敗';
+            
+            const result = await prisma.member_user.update({
+                where: { user_id: sid },
+                data: {
+                    avatar: req.file.location,
+                    updated_at: new Date()
+                }
+            });
+
+            if (result) {
+                output.success = true;
+                output.msg = '照片上傳成功';
+            } else {
+                output.msg = '照片上傳失敗';
+            }
         } else {
             output.msg = '未上傳照片';
         }
 
         res.json(output);
     } catch (e) {
-        console.log(e);
+        console.error('Upload Avatar Error:', e);
         res.status(500).json({ success: false, msg: '伺服器錯誤' });
     }
 });

@@ -1,0 +1,522 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model admin_user {
+  admin_user_id       Int     @id @default(autoincrement()) @db.UnsignedInt
+  admin_account       String  @db.VarChar(255)
+  admin_password_hash String  @db.VarChar(255)
+  admin_email         String  @db.VarChar(255)
+  admin_permission    Int     @default(1) @db.TinyInt
+  google_avatar_url   String? @default("") @db.VarChar(255)
+  avatar_img          Bytes?  @db.MediumBlob
+}
+
+model bar_area {
+  bar_area_id   Int    @id @default(autoincrement())
+  bar_area_name String @db.VarChar(255)
+  bars          bars[]
+}
+
+model bar_booking {
+  bar_booking_id         Int            @id @default(autoincrement())
+  user_id                Int
+  bar_id                 Int
+  bar_booking_time       DateTime       @db.Date
+  bar_booking_people_num Int
+  bar_time_slot_id       Int
+  created_at             DateTime       @default(now()) @db.Timestamp(0)
+  bars                   bars           @relation(fields: [bar_id], references: [bar_id], onDelete: Cascade, map: "bar_booking_ibfk_1")
+  bar_time_slots         bar_time_slots @relation(fields: [bar_time_slot_id], references: [bar_time_slot_id], onDelete: Cascade, map: "bar_booking_ibfk_2")
+  member_user            member_user    @relation(fields: [user_id], references: [user_id], onDelete: Cascade, map: "bar_booking_ibfk_3")
+
+  @@index([bar_id], map: "bar_booking_ibfk_1")
+  @@index([bar_time_slot_id], map: "bar_booking_ibfk_2")
+  @@index([user_id], map: "bar_booking_ibfk_3")
+}
+
+model bar_pic {
+  bar_pic_id   Int    @id @default(autoincrement())
+  bar_pic_name String @db.VarChar(255)
+  bar_id       Int
+  bar_img      Bytes? @db.MediumBlob
+  bars         bars   @relation(fields: [bar_id], references: [bar_id], onDelete: Cascade, map: "bar_pic_ibfk_1")
+
+  @@index([bar_id], map: "bar_pic_ibfk_1")
+}
+
+model bar_rating {
+  bar_rating_id   Int         @id @default(autoincrement())
+  bar_id          Int
+  user_id         Int
+  bar_rating_star Float       @db.Float
+  created_at      DateTime    @default(now()) @db.Timestamp(0)
+  updated_at      DateTime    @default(now()) @db.Timestamp(0)
+  bars            bars        @relation(fields: [bar_id], references: [bar_id], onDelete: Cascade, map: "bar_rating_ibfk_1")
+  member_user     member_user @relation(fields: [user_id], references: [user_id], onDelete: Cascade, map: "bar_rating_ibfk_2")
+
+  @@index([bar_id], map: "bar_rating_ibfk_1")
+  @@index([user_id], map: "bar_rating_ibfk_2")
+}
+
+model bar_saved {
+  bar_saved_id Int         @id @default(autoincrement())
+  user_id      Int
+  bar_id       Int
+  created_at   DateTime    @default(now()) @db.Timestamp(0)
+  bars         bars        @relation(fields: [bar_id], references: [bar_id], onDelete: Cascade, map: "bar_saved_ibfk_1")
+  member_user  member_user @relation(fields: [user_id], references: [user_id], onDelete: Cascade, map: "bar_saved_ibfk_2")
+
+  @@unique([user_id, bar_id], map: "bar_saved_id")
+  @@index([bar_id], map: "bar_saved_ibfk_1")
+}
+
+model bar_time_slots {
+  bar_time_slot_id Int           @id
+  bar_start_time   DateTime      @db.Time(0)
+  bar_end_time     DateTime      @db.Time(0)
+  bar_max_capacity Int           @default(20)
+  bar_booking      bar_booking[]
+}
+
+model bar_type {
+  bar_type_id   Int           @id
+  bar_type_name String        @db.VarChar(255)
+  bars          bars[]
+  member_user   member_user[]
+}
+
+model bars {
+  bar_id           Int            @id @default(autoincrement())
+  bar_name         String         @db.VarChar(255)
+  bar_city         String         @default("Taipei City") @db.VarChar(255)
+  bar_area_id      Int
+  rating           Float          @default(3.6) @db.Float
+  bar_addr         String         @db.VarChar(255)
+  bar_opening_time DateTime       @db.Time(0)
+  bar_closing_time DateTime       @db.Time(0)
+  bar_contact      String?        @db.VarChar(255)
+  bar_description  String?        @db.VarChar(255)
+  bar_type_id      Int
+  bar_latitude     Float          @db.Float
+  bar_longtitude   Float          @db.Float
+  bar_booking      bar_booking[]
+  bar_pic          bar_pic[]
+  bar_rating       bar_rating[]
+  bar_saved        bar_saved[]
+  bar_area         bar_area       @relation(fields: [bar_area_id], references: [bar_area_id], onDelete: Cascade, map: "bars_ibfk_1")
+  bar_type         bar_type       @relation(fields: [bar_type_id], references: [bar_type_id], onDelete: Cascade, map: "bars_ibfk_2")
+  trip_details     trip_details[]
+
+  @@index([bar_area_id], map: "bars_ibfk_1")
+  @@index([bar_type_id], map: "bars_ibfk_2")
+}
+
+model booking_detail {
+  booking_detail_id   Int                 @id @default(autoincrement())
+  booking_id          Int
+  seat_id             Int
+  booking_type        Boolean
+  booking_seat_system booking_seat_system @relation(fields: [seat_id], references: [seat_id], onDelete: NoAction, onUpdate: NoAction, map: "booking_detail_ibfk_1")
+  booking_system      booking_system      @relation(fields: [booking_id], references: [booking_id], onDelete: NoAction, onUpdate: NoAction, map: "booking_id")
+
+  @@index([booking_id], map: "booking_id")
+  @@index([seat_id], map: "seat_id")
+}
+
+model booking_movie {
+  movie_id           Int                @id @default(autoincrement())
+  title              String             @db.VarChar(255)
+  poster_img         String             @db.VarChar(255)
+  movie_description  String             @db.VarChar(500)
+  movie_rating       Float              @db.Float
+  movie_type_id      Int
+  movie_img          Bytes?             @db.MediumBlob
+  youtube_id         String?            @db.VarChar(255)
+  booking_movie_type booking_movie_type @relation(fields: [movie_type_id], references: [movie_type_id], onDelete: NoAction, onUpdate: NoAction, map: "movie_type_id")
+  trip_details       trip_details[]
+
+  @@index([movie_type_id], map: "movie_type_id")
+}
+
+model booking_movie_saved {
+  booking_movie_saved_id Int      @id @default(autoincrement())
+  user_id                Int
+  movie_id               Int
+  created_at             DateTime @default(now()) @db.Timestamp(0)
+}
+
+model booking_movie_type {
+  movie_type_id Int             @id
+  movie_type    String          @db.VarChar(255)
+  booking_movie booking_movie[]
+  member_user   member_user[]
+}
+
+model booking_points_dec {
+  points_decrease_id Int         @id
+  user_id            Int
+  points_decrease    Int
+  created_at         DateTime    @default(now()) @db.Timestamp(0)
+  member_user        member_user @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "booking_points_dec_ibfk_1")
+
+  @@index([user_id], map: "user_id")
+}
+
+model booking_seat_system {
+  seat_id        Int              @id @default(autoincrement())
+  seat_uuid      String           @db.VarChar(255)
+  seat_status    Boolean
+  movie_id       Int
+  booking_detail booking_detail[]
+}
+
+model booking_showtime_system {
+  show_time_id Int      @id
+  room_id      Int
+  movie_id     Int
+  movie_time   DateTime @db.Time(0)
+  seat_count   Int
+  movie_date   DateTime @db.Date
+}
+
+model booking_system {
+  booking_id     Int              @id @default(autoincrement())
+  user_id        Int
+  service_id     Int
+  points_change  Int
+  movie_date     DateTime         @db.Date
+  movie_time     DateTime         @db.Time(0)
+  order_id       Int
+  order_status   Boolean
+  price          Int
+  created_at     DateTime         @default(now()) @db.Timestamp(0)
+  updated_at     DateTime         @default(now()) @db.Timestamp(0)
+  movie_id       Int
+  booking_detail booking_detail[]
+
+  @@index([movie_id], map: "movie_id")
+  @@index([user_id], map: "user_id")
+}
+
+model comm_comment {
+  comm_comment_id Int         @id @default(autoincrement())
+  context         String      @db.VarChar(255)
+  status          String      @db.VarChar(255)
+  created_at      DateTime    @default(now()) @db.Timestamp(0)
+  updated_at      DateTime    @default(now()) @db.Timestamp(0)
+  post_id         Int
+  user_id         Int
+  comm_post       comm_post   @relation(fields: [post_id], references: [post_id], onDelete: Cascade, map: "comm_comment_ibfk_1")
+  member_user     member_user @relation(fields: [user_id], references: [user_id], onDelete: Cascade, map: "comm_comment_ibfk_2")
+
+  @@index([post_id], map: "comm_comment_ibfk_1")
+  @@index([user_id], map: "comm_comment_ibfk_2")
+}
+
+model comm_events {
+  comm_event_id     Int                 @id @default(autoincrement())
+  title             String              @db.VarChar(255)
+  description       String              @db.VarChar(255)
+  status            String              @db.VarChar(255)
+  location          String              @db.VarChar(255)
+  user_id           Int
+  created_at        DateTime            @default(now()) @db.Timestamp(0)
+  updated_at        DateTime            @default(now()) @db.Timestamp(0)
+  start_date        DateTime?           @db.Date
+  start_time        DateTime?           @db.Time(0)
+  end_date          DateTime?           @db.Date
+  end_time          DateTime?           @db.Time(0)
+  comm_events_photo comm_events_photo[]
+  comm_participants comm_participants[]
+
+  @@unique([comm_event_id, user_id], map: "comm_event_id")
+  @@index([user_id], map: "comm_events_ibfk_1")
+}
+
+model comm_events_photo {
+  comm_events_photo_id Int         @id @default(autoincrement())
+  photo_name           String      @db.VarChar(255)
+  comm_event_id        Int
+  img                  Bytes       @db.MediumBlob
+  comm_events          comm_events @relation(fields: [comm_event_id], references: [comm_event_id], onDelete: Cascade, map: "comm_events_photo_ibfk_1")
+
+  @@index([comm_event_id], map: "comm_event_id")
+}
+
+model comm_follows {
+  comm_follows_id Int      @id @default(autoincrement())
+  follower_id     Int
+  following_id    Int
+  created_at      DateTime @default(now()) @db.Timestamp(0)
+}
+
+model comm_likes {
+  comm_likes_id Int         @id @default(autoincrement())
+  post_id       Int
+  user_id       Int
+  comm_post     comm_post   @relation(fields: [post_id], references: [post_id], onDelete: Cascade, map: "comm_likes_ibfk_1")
+  member_user   member_user @relation(fields: [user_id], references: [user_id], onDelete: Cascade, map: "comm_likes_ibfk_2")
+
+  @@unique([post_id, user_id], map: "comm_likes_id")
+  @@index([user_id], map: "comm_likes_ibfk_2")
+}
+
+model comm_noti {
+  comm_noti_id                                   Int         @id @default(autoincrement())
+  sender_id                                      Int
+  receiver_id                                    Int
+  type                                           String      @db.VarChar(255)
+  message                                        String      @db.VarChar(255)
+  is_read                                        Boolean
+  created_at                                     DateTime    @default(now()) @db.Timestamp(0)
+  updated_at                                     DateTime    @default(now()) @db.Timestamp(0)
+  post_id                                        Int?
+  member_user_comm_noti_sender_idTomember_user   member_user @relation("comm_noti_sender_idTomember_user", fields: [sender_id], references: [user_id], onDelete: Cascade, map: "comm_noti_ibfk_1")
+  member_user_comm_noti_receiver_idTomember_user member_user @relation("comm_noti_receiver_idTomember_user", fields: [receiver_id], references: [user_id], onDelete: Cascade, map: "comm_noti_ibfk_2")
+  comm_post                                      comm_post?  @relation(fields: [post_id], references: [post_id], onDelete: Cascade, map: "comm_noti_ibfk_3")
+
+  @@index([post_id], map: "post_id")
+  @@index([receiver_id], map: "receiver_id")
+  @@index([sender_id], map: "sender_id")
+}
+
+model comm_participants {
+  comm_participant_id Int         @id @default(autoincrement())
+  created_at          DateTime    @default(now()) @db.Timestamp(0)
+  comm_event_id       Int
+  user_id             Int
+  comm_events         comm_events @relation(fields: [comm_event_id], references: [comm_event_id], onDelete: Cascade, map: "comm_participants_ibfk_1")
+
+  @@unique([comm_event_id, user_id], map: "comm_participant_id")
+  @@index([user_id], map: "comm_participants_ibfk_2")
+}
+
+model comm_photo {
+  comm_photo_id Int       @id @default(autoincrement())
+  photo_name    String    @db.VarChar(255)
+  post_id       Int
+  img           Bytes     @db.MediumBlob
+  comm_post     comm_post @relation(fields: [post_id], references: [post_id], onDelete: Cascade, map: "comm_photo_ibfk_1")
+
+  @@index([post_id], map: "comm_photo_ibfk_1")
+}
+
+model comm_post {
+  post_id      Int            @id @default(autoincrement())
+  context      String         @db.VarChar(255)
+  created_at   DateTime       @default(now()) @db.Timestamp(0)
+  updated_at   DateTime       @default(now()) @db.Timestamp(0)
+  user_id      Int
+  comm_comment comm_comment[]
+  comm_likes   comm_likes[]
+  comm_noti    comm_noti[]
+  comm_photo   comm_photo[]
+  member_user  member_user    @relation(fields: [user_id], references: [user_id], onDelete: Cascade, map: "comm_post_ibfk_1")
+  comm_saved   comm_saved[]
+
+  @@index([user_id], map: "comm_post_ibfk_1")
+}
+
+model comm_saved {
+  comm_saved_id Int         @id @default(autoincrement())
+  post_id       Int
+  user_id       Int
+  created_at    DateTime    @default(now()) @db.Timestamp(0)
+  comm_post     comm_post   @relation(fields: [post_id], references: [post_id], onDelete: Cascade, map: "comm_saved_ibfk_1")
+  member_user   member_user @relation(fields: [user_id], references: [user_id], onDelete: Cascade, map: "comm_saved_ibfk_2")
+
+  @@unique([post_id, user_id], map: "comm_saved_id")
+  @@index([user_id], map: "comm_saved_ibfk_2")
+}
+
+model friendships {
+  friendship_id                                 Int                   @id @unique(map: "friendship_id") @default(autoincrement())
+  user_id1                                      Int
+  user_id2                                      Int
+  friendship_status                             String                @db.VarChar(255)
+  send_at                                       DateTime              @default(now()) @db.Timestamp(0)
+  confirmed_at                                  DateTime              @default(now()) @db.Timestamp(0)
+  updated_at                                    DateTime              @default(now()) @db.Timestamp(0)
+  member_user_friendships_user_id1Tomember_user member_user           @relation("friendships_user_id1Tomember_user", fields: [user_id1], references: [user_id], onDelete: Cascade, onUpdate: NoAction, map: "friendships_ibfk_1")
+  member_user_friendships_user_id2Tomember_user member_user           @relation("friendships_user_id2Tomember_user", fields: [user_id2], references: [user_id], onDelete: Cascade, onUpdate: NoAction, map: "friendships_ibfk_2")
+  friendships_message                           friendships_message[]
+
+  @@index([user_id1], map: "friendships_ibfk_1")
+  @@index([user_id2], map: "friendships_ibfk_2")
+}
+
+model friendships_message {
+  message_id    Int         @id @default(autoincrement())
+  friendship_id Int
+  sender_id     Int
+  msg_type      String      @default("T") @db.VarChar(1)
+  content       String      @db.VarChar(1000)
+  sended_at     DateTime    @default(now()) @db.Timestamp(0)
+  friendships   friendships @relation(fields: [friendship_id], references: [friendship_id], onDelete: Cascade, onUpdate: NoAction, map: "friendships_message_ibfk_1")
+  member_user   member_user @relation(fields: [sender_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction, map: "friendships_message_ibfk_3")
+
+  @@index([friendship_id], map: "friendships_message_ibfk_1")
+  @@index([sender_id], map: "friendships_message_ibfk_3")
+}
+
+model member_game_record {
+  record_id   Int         @id @default(autoincrement())
+  user_id     Int
+  game_score  Int?
+  game_time   DateTime    @db.Time(0)
+  created_at  DateTime    @default(now()) @db.Timestamp(0)
+  member_user member_user @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "member_game_record_ibfk_1")
+
+  @@index([user_id], map: "user_id")
+}
+
+model member_gender {
+  gender      Int     @id
+  gender_type String? @db.VarChar(10)
+}
+
+model member_points_inc {
+  points_increase_id Int         @id @default(autoincrement())
+  user_id            Int
+  points_increase    Int
+  reason             String      @db.VarChar(255)
+  created_at         DateTime    @default(now()) @db.Timestamp(0)
+  member_user        member_user @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction, map: "member_points_inc_ibfk_1")
+
+  @@index([user_id], map: "idx_user_id")
+}
+
+model member_user {
+  user_id                                       Int                   @id @default(autoincrement())
+  google_uid                                    String?               @db.VarChar(255)
+  avatar                                        String?               @default("http://119.14.42.80:3001/avatar/defaultAvatar.jpg") @db.VarChar(255)
+  username                                      String?               @default("Anonymous") @db.VarChar(255)
+  email                                         String                @db.VarChar(255)
+  password_hash                                 String?               @db.VarChar(255)
+  gender                                        String?               @db.VarChar(20)
+  user_active                                   Boolean               @default(false)
+  birthday                                      DateTime?             @db.Date
+  mobile                                        String?               @db.VarChar(20)
+  bar_type_id                                   Int?
+  movie_type_id                                 Int?
+  profile_content                               String?               @db.VarChar(500)
+  created_at                                    DateTime              @default(now()) @db.Timestamp(0)
+  updated_at                                    DateTime              @default(now()) @db.Timestamp(0)
+  bar_type                                      bar_type?             @relation(fields: [bar_type_id], references: [bar_type_id], onDelete: NoAction, onUpdate: NoAction)
+  movie_type                                    booking_movie_type?   @relation(fields: [movie_type_id], references: [movie_type_id], onDelete: NoAction, onUpdate: NoAction)
+  bar_booking                                   bar_booking[]
+  bar_rating                                    bar_rating[]
+  bar_saved                                     bar_saved[]
+  booking_points_dec                            booking_points_dec[]
+  comm_comment                                  comm_comment[]
+  comm_likes                                    comm_likes[]
+  comm_noti_comm_noti_sender_idTomember_user    comm_noti[]           @relation("comm_noti_sender_idTomember_user")
+  comm_noti_comm_noti_receiver_idTomember_user  comm_noti[]           @relation("comm_noti_receiver_idTomember_user")
+  comm_post                                     comm_post[]
+  comm_saved                                    comm_saved[]
+  friendships_friendships_user_id1Tomember_user friendships[]         @relation("friendships_user_id1Tomember_user")
+  friendships_friendships_user_id2Tomember_user friendships[]         @relation("friendships_user_id2Tomember_user")
+  friendships_message                           friendships_message[]
+  member_game_record                            member_game_record[]
+  member_points_inc                             member_points_inc[]
+  trip_plans                                    trip_plans[]
+}
+
+model members {
+  id        Int       @id @default(autoincrement())
+  email     String    @unique(map: "email") @db.VarChar(255)
+  password  String    @db.VarChar(255)
+  mobile    String?   @db.VarChar(255)
+  address   String?   @db.VarChar(255)
+  birthday  DateTime? @db.Date
+  hash      String    @db.VarChar(255)
+  activated Int       @default(0)
+  nickname  String    @db.VarChar(255)
+  create_at DateTime  @db.DateTime(0)
+}
+
+model otp {
+  otp_id        Int     @id @default(autoincrement()) @db.UnsignedInt
+  user_id       Int?
+  email         String? @db.VarChar(200)
+  token         Int?
+  exp_timestamp BigInt?
+}
+
+model sessions {
+  session_id String  @id @db.VarChar(128)
+  expires    Int     @db.UnsignedInt
+  data       String? @db.MediumText
+}
+
+model trip_calendar {
+  calendar_id                                                       Int           @id @default(autoincrement())
+  trip_plan_id                                                      Int
+  primary_trip_detail_id                                            Int?
+  secondary_trip_detail_id                                          Int?
+  tertiary_trip_detail_id                                           Int?
+  created_at                                                        DateTime      @default(now()) @db.Timestamp(0)
+  trip_details_trip_calendar_primary_trip_detail_idTotrip_details   trip_details? @relation("trip_calendar_primary_trip_detail_idTotrip_details", fields: [primary_trip_detail_id], references: [trip_detail_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_primary_trip_detail")
+  trip_details_trip_calendar_secondary_trip_detail_idTotrip_details trip_details? @relation("trip_calendar_secondary_trip_detail_idTotrip_details", fields: [secondary_trip_detail_id], references: [trip_detail_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_secondary_trip_detail")
+  trip_details_trip_calendar_tertiary_trip_detail_idTotrip_details  trip_details? @relation("trip_calendar_tertiary_trip_detail_idTotrip_details", fields: [tertiary_trip_detail_id], references: [trip_detail_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_tertiary_trip_detail")
+  trip_plans                                                        trip_plans    @relation(fields: [trip_plan_id], references: [trip_plan_id], onDelete: Cascade, onUpdate: NoAction, map: "trip_calendar_ibfk_1")
+
+  @@index([primary_trip_detail_id], map: "fk_primary_trip_detail")
+  @@index([secondary_trip_detail_id], map: "fk_secondary_trip_detail")
+  @@index([tertiary_trip_detail_id], map: "fk_tertiary_trip_detail")
+  @@index([trip_plan_id], map: "trip_plan_id")
+}
+
+model trip_details {
+  trip_detail_id                                                     Int             @id @default(autoincrement())
+  trip_plan_id                                                       Int
+  block                                                              Int?
+  movie_id                                                           Int?
+  bar_id                                                             Int?
+  trip_calendar_trip_calendar_primary_trip_detail_idTotrip_details   trip_calendar[] @relation("trip_calendar_primary_trip_detail_idTotrip_details")
+  trip_calendar_trip_calendar_secondary_trip_detail_idTotrip_details trip_calendar[] @relation("trip_calendar_secondary_trip_detail_idTotrip_details")
+  trip_calendar_trip_calendar_tertiary_trip_detail_idTotrip_details  trip_calendar[] @relation("trip_calendar_tertiary_trip_detail_idTotrip_details")
+  trip_plans                                                         trip_plans      @relation(fields: [trip_plan_id], references: [trip_plan_id], onDelete: Cascade, onUpdate: NoAction, map: "trip_details_ibfk_1")
+  bars                                                               bars?           @relation(fields: [bar_id], references: [bar_id], onDelete: Cascade, onUpdate: NoAction, map: "trip_details_ibfk_2")
+  booking_movie                                                      booking_movie?  @relation(fields: [movie_id], references: [movie_id], onDelete: Cascade, onUpdate: NoAction, map: "trip_details_ibfk_3")
+
+  @@index([bar_id], map: "trip_details_ibfk_2")
+  @@index([movie_id], map: "trip_details_ibfk_3")
+  @@index([trip_plan_id], map: "trip_plan_id")
+}
+
+model trip_plans {
+  trip_plan_id     Int             @id @default(autoincrement())
+  user_id          Int
+  trip_title       String          @db.VarChar(255)
+  trip_content     String?         @db.VarChar(255)
+  trip_description String?         @db.VarChar(255)
+  trip_notes       String?         @db.Text
+  trip_date        DateTime        @db.Date
+  trip_draft       Boolean
+  created_at       DateTime        @default(now()) @db.Timestamp(0)
+  trip_pic         String?         @db.VarChar(255)
+  trip_calendar    trip_calendar[]
+  trip_details     trip_details[]
+  member_user      member_user     @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction, map: "user_id_id")
+  trip_saved       trip_saved[]
+
+  @@index([user_id], map: "user_id_id")
+}
+
+model trip_saved {
+  trip_saved_id Int        @id @default(autoincrement())
+  trip_plan_id  Int
+  user_id       Int
+  created_at    DateTime   @default(now()) @db.Timestamp(0)
+  trip_plans    trip_plans @relation(fields: [trip_plan_id], references: [trip_plan_id], onDelete: Cascade, onUpdate: NoAction, map: "trip_saved_ibfk_1")
+
+  @@index([trip_plan_id], map: "trip_plan_id")
+  @@index([user_id], map: "user_id")
+}

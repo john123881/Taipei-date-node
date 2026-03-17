@@ -1,17 +1,16 @@
 import express from 'express';
 import dayjs from 'dayjs';
 import { account } from '../apiConfig.js';
-import db from '../../utils/mysql2-connect.js';
+import prisma from '../../utils/prisma-client.js';
 import authenticate from '../../middlewares/authenticate.js';
 
 const editProfileRouter = express.Router();
 
 // 編輯-讀取編輯頁面的個人資料API
 editProfileRouter.get(account.getEditProfile, authenticate, async (req, res) => {
-    // authenticate : 授權後，!req.my_jwt?.id判斷有無授權成功
     const output = {
         success: false,
-        action: '', // add, remove
+        action: '',
         error: '',
         code: 0,
     };
@@ -23,44 +22,60 @@ editProfileRouter.get(account.getEditProfile, authenticate, async (req, res) => 
     }
 
     let sid = +req.params.sid || 0;
-    // console.log(+req.params.sid)
-    const sql = `SELECT user.*,bt.bar_type_name,mt.movie_type,SUM(pi.points_increase) - SUM(DISTINCT pd.points_decrease) AS total_points
-    FROM member_user AS user
-    LEFT JOIN bar_type AS bt ON user.bar_type_id = bt.bar_type_id
-    LEFT JOIN booking_movie_type AS mt ON user.movie_type_id = mt.movie_type_id
-    LEFT JOIN member_points_inc AS pi ON user.user_id = pi.user_id
-    LEFT JOIN booking_points_dec AS pd ON user.user_id = pd.user_id
-    WHERE user.user_id=? `;
-    const [rows] = await db.query(sql, [sid]);
-    // console.log('編輯讀取: 使用者資料為:=>', rows);
 
-    // 檢查有沒有該筆資料時, 直接跳轉
-    const checkSql = `SELECT COUNT(*) AS count FROM member_user WHERE user_id = ?`;
-    const [checkResult] = await db.query(checkSql, [sid]);
-    if (checkResult[0].count === 0) {
-        output.success = false;
-        output.code = 440;
-        output.error = '沒有該筆資料';
-        return res.json(output);
+    try {
+        const user = await prisma.member_user.findUnique({
+            where: { user_id: sid },
+            include: {
+                bar_type: true,
+                movie_type: true,
+                member_points_inc: {
+                    select: { points_increase: true }
+                },
+                booking_points_dec: {
+                    select: { points_decrease: true }
+                }
+            }
+        });
+
+        if (!user) {
+            output.success = false;
+            output.code = 440;
+            output.error = '沒有該筆資料';
+            return res.json(output);
+        }
+
+        const totalPointsInc = user.member_points_inc.reduce((sum, item) => sum + item.points_increase, 0);
+        const totalPointsDec = user.booking_points_dec.reduce((sum, item) => sum + item.points_decrease, 0);
+        const total_points = totalPointsInc - totalPointsDec;
+
+        const responseData = {
+            ...user,
+            bar_type_name: user.bar_type?.bar_type_name || null,
+            movie_type: user.movie_type?.movie_type || null,
+            total_points: total_points,
+            birthday: user.birthday ? dayjs(user.birthday).format('YYYY-MM-DD') : null
+        };
+
+        const barTypes = await prisma.bar_type.findMany({
+            select: { bar_type_name: true }
+        });
+
+        const movieTypes = await prisma.booking_movie_type.findMany({
+            select: { movie_type: true }
+        });
+
+        res.json({
+            success: true,
+            data: responseData,
+            barType: [barTypes], // 維持原本回傳格式 [ [{name}, {name}] ]
+            movieType: [movieTypes],
+        });
+
+    } catch (error) {
+        console.error('Edit Profile GET Error:', error);
+        res.status(500).json({ success: false, error: '伺服器內部錯誤' });
     }
-
-    //處裡時間格式
-    if (rows[0].birthday) {
-        rows[0].birthday = dayjs(rows[0].birthday).format('YYYY-MM-DD');
-    }
-
-    const sqlBarType = `SELECT bar_type_name FROM bar_type `;
-    const [rows2] = await db.query(sqlBarType);
-    const sqlMovieType = `SELECT movie_type FROM booking_movie_type `;
-    const [rows3] = await db.query(sqlMovieType);
-
-    //response DATA
-    res.json({
-        success: true,
-        data: rows[0],
-        barType: [rows2],
-        movieType: [rows3],
-    });
 });
 
 // 編輯-編輯個人資料API
@@ -72,39 +87,47 @@ editProfileRouter.put(account.editProfile, async (req, res) => {
         errors: '',
     };
 
-    // 查詢類型對照ID - 查詢酒吧類型
-    const barTypeQuery = `SELECT bar_type_id FROM bar_type WHERE bar_type_name = '${req.body.fav1}'`;
-    const [rows1] = await db.query(barTypeQuery);
-    let barTypeId;
-    if (rows1 && rows1.length > 0 && rows1[0].bar_type_id) {
-        barTypeId = rows1[0].bar_type_id;
-    } else {
-        barTypeId = 0;
-    }
-    // 查詢類型對照ID - 查詢酒吧類型
-    const movieTypeQuery = `SELECT movie_type_id FROM booking_movie_type WHERE movie_type = '${req.body.fav2}'`;
-    const [rows2] = await db.query(movieTypeQuery);
-    let movieTypeId;
-    if (rows2 && rows2.length > 0 && rows2[0].movie_type_id) {
-        movieTypeId = rows2[0].movie_type_id;
-    } else {
-        movieTypeId = 0;
-    }
-
-    //更新資料
-    let sid = +req.params.sid || 0;
-    const sql = `UPDATE member_user SET email = '${req.body.email}' , username = '${req.body.username}' , gender = '${req.body.gender}' , birthday = '${req.body.birthday}' , mobile = '${req.body.mobile}' , profile_content = '${req.body.profile}' , bar_type_id = '${barTypeId}' , movie_type_id = '${movieTypeId}' WHERE user_id=? `;
-
     try {
-        const [result] = await db.query(sql, [sid]);
-        output.success = !!result.changedRows;
-        if (result.changedRows) {
+        // 1. 查詢類型對照ID
+        const barType = await prisma.bar_type.findFirst({
+            where: { bar_type_name: req.body.fav1 }
+        });
+        const barTypeId = barType ? barType.bar_type_id : 0;
+
+        const movieType = await prisma.booking_movie_type.findFirst({
+            where: { movie_type: req.body.fav2 }
+        });
+        const movieTypeId = movieType ? movieType.movie_type_id : 0;
+
+        // 2. 更新資料
+        let sid = +req.params.sid || 0;
+        
+        const updatedUser = await prisma.member_user.update({
+            where: { user_id: sid },
+            data: {
+                email: req.body.email,
+                username: req.body.username,
+                gender: req.body.gender,
+                birthday: req.body.birthday ? new Date(req.body.birthday) : null,
+                mobile: req.body.mobile,
+                profile_content: req.body.profile,
+                bar_type_id: barTypeId,
+                movie_type_id: movieTypeId,
+                updated_at: new Date()
+            }
+        });
+
+        if (updatedUser) {
+            output.success = true;
             output.msg = '編輯成功';
         } else {
             output.msg = '沒有編輯';
         }
+
     } catch (error) {
-        console.log('error:', error);
+        console.error('Edit Profile PUT Error:', error);
+        output.msg = '編輯失敗';
+        output.errors = error.message;
     }
 
     res.json(output);
