@@ -41,3 +41,18 @@ next-env.d.ts
 
 .env
 dev.env
+
+# Security: private keys and certificates
+/cert/*.pem
+/cert/*.key
+/cert/csr.pem
+
+# Database: Prisma migration and engine files
+/prisma/migrations-backup
+.prisma
+node_modules/.prisma
+
+# OS files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
