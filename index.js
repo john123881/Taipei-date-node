@@ -177,8 +177,10 @@ app.use('/', express.static('public'));
 // server 偵聽
 const port = process.env.PORT || 3002;
 app.listen(port, '0.0.0.0', () => {
-    console.log(`Server Started at http://localhost:${port}`);
+    const mode = process.env.NODE_ENV || 'production';
+    console.log(`[${mode.toUpperCase()}] Server Started at http://localhost:${port}`);
 });
+
 
 /* 404 頁面 */
 app.use((req, res) => {

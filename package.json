@@ -5,10 +5,10 @@
     "main": "index.js",
     "type": "module",
     "scripts": {
-        "dev": "nodemon --env-file=dev.env index.js",
+        "dev": "SET NODE_ENV=development && nodemon --env-file=dev.env index.js",
         "socket": "nodemon index-socket.js",
-        "noti-socket": "nodemon --env-file=dev.env noti-socket.js",
-        "start": "node index.js",
+        "noti-socket": "SET NODE_ENV=development && nodemon --env-file=dev.env noti-socket.js",
+        "start": "SET NODE_ENV=production && node index.js",
         "test": "echo \"Error: no test specified\" && exit 1"
     },
     "keywords": [],
