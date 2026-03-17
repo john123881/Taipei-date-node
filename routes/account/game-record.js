@@ -7,7 +7,8 @@ import { createGameRecord } from '../../services/index.js';
 const gameRecordRouter = express.Router();
 
 // 遊戲 - 上傳紀錄 & 積分發放 API
-gameRecordRouter.post(account.gameRecord, authenticate, async (req, res) => {
+gameRecordRouter.post(account.gameRecordUpload, authenticate, async (req, res) => {
+
     let output = {
         success: false,
         msg: '',

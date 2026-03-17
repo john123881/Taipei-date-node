@@ -5,10 +5,13 @@ import { addMockData } from '../../services/index.js';
 const addDataRouter = express.Router();
 
 addDataRouter.post(account.addData, async (req, res) => {
-  const data = req.body;
-  if (!Array.isArray(data)) {
-    return res.status(400).json({ success: false, msg: '資料必須是陣列' });
+  // 自動相容：如果是單一物件就轉成陣列
+  const data = Array.isArray(req.body) ? req.body : [req.body];
+  
+  if (data.length === 0) {
+    return res.status(400).json({ success: false, msg: '請提供有效的資料' });
   }
+
 
   try {
     const results = await addMockData(data);
