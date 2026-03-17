@@ -1,7 +1,7 @@
 import express from 'express';
 import { account } from '../apiConfig.js';
-import prisma from '../../utils/prisma-client.js';
 import authenticate from '../../middlewares/authenticate.js';
+import { getSavedBars, deleteSavedBar } from '../../services/index.js';
 
 const collectBarRouter = express.Router();
 
@@ -25,10 +25,7 @@ collectBarRouter.get(account.collectBar, authenticate, async (req, res) => {
         const page = parseInt(req.query.page) || 1;
         const perPage = 5;
 
-        // 1. 取得總筆數
-        const totalRows = await prisma.bar_saved.count({
-            where: { user_id: sid }
-        });
+        const { totalRows, totalPages, data } = await getSavedBars(sid, page, perPage);
 
         if (totalRows === 0) {
             output.code = 440;
@@ -37,70 +34,15 @@ collectBarRouter.get(account.collectBar, authenticate, async (req, res) => {
             return res.json({ success: false, output });
         }
 
-        const totalPages = Math.ceil(totalRows / perPage);
-
-        // 2. 處理頁碼跳轉
         if (page < 1 || (totalPages > 0 && page > totalPages)) {
             const targetPage = page < 1 ? 1 : totalPages;
             const newQuery = { ...req.query, page: targetPage };
             const qp = new URLSearchParams(newQuery).toString();
-            const redirectUrl = `${req.originalUrl.split('?')[0]}?${qp}`;
-            return res.redirect(redirectUrl);
+            return res.redirect(`${req.originalUrl.split('?')[0]}?${qp}`);
         }
 
-        // 3. 取得分頁資料
-        const savedBars = await prisma.bar_saved.findMany({
-            where: { user_id: sid },
-            orderBy: { bar_saved_id: 'desc' },
-            skip: (page - 1) * perPage,
-            take: perPage,
-            include: {
-                member_user: {
-                    select: { email: true, username: true }
-                },
-                bars: {
-                    include: {
-                        bar_area: true,
-                        bar_type: true,
-                        bar_pic: {
-                            select: { bar_pic_name: true, bar_img: true },
-                            take: 1
-                        }
-                    }
-                }
-            }
-        });
-
-        // 4. 資料轉換
-        const formattedData = savedBars.map(item => {
-            const bar = item.bars;
-            const user = item.member_user;
-            const photo = bar?.bar_pic?.[0];
-
-            let imgData = null;
-            if (photo?.bar_img) {
-                const imageBase64 = Buffer.from(photo.bar_img).toString('base64');
-                imgData = `data:image/jpeg;base64,${imageBase64}`;
-            }
-
-            return {
-                save_id: item.bar_saved_id,
-                email: user?.email,
-                username: user?.username,
-                bar_id: bar?.bar_id,
-                bar_name: bar?.bar_name,
-                area: bar?.bar_area?.bar_area_name,
-                address: bar?.bar_addr,
-                type: bar?.bar_type?.bar_type_name,
-                contact: bar?.bar_contact,
-                description: bar?.bar_description,
-                img_name: photo?.bar_pic_name,
-                img: imgData
-            };
-        });
-
         output.success = true;
-        output.data = formattedData;
+        output.data = data;
         output.code = 200;
 
         res.json({
@@ -139,30 +81,18 @@ collectBarRouter.delete(account.collectBarDelete, authenticate, async (req, res)
             return res.json({ output });
         }
         const save_id = parseInt(req.params.save_id) || 0;
+        const result = await deleteSavedBar(save_id);
 
-        const existing = await prisma.bar_saved.findUnique({
-            where: { bar_saved_id: save_id }
-        });
-
-        if (!existing) {
+        if (!result) {
             output.code = 401;
-            output.error = '無收藏此間酒吧';
+            output.error = '沒這間酒吧';
             return res.json({ output });
         }
 
-        const result = await prisma.bar_saved.delete({
-            where: { bar_saved_id: save_id }
-        });
+        output.success = true;
+        output.action = 'remove';
+        res.json({ output });
 
-        if (result) {
-            output.success = true;
-            output.action = 'remove';
-            return res.json({ output });
-        } else {
-            output.code = 410;
-            output.error = '無法移除';
-            return res.json({ output });
-        }
     } catch (error) {
         console.error('Delete Saved Bar Error:', error);
         output.success = false;
