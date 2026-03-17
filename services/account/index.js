@@ -9,3 +9,5 @@ export * from './addMockData.js';
 export * from './savedBar.js';
 export * from './savedMovie.js';
 export * from './savedList.js';
+export * from './authService.js';
+
