@@ -1,3 +1,6 @@
+// 存取`.env`設定檔案使用
+import 'dotenv/config.js';
+
 // 引入 express
 import express from 'express';
 import session from 'express-session';
@@ -7,7 +10,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 
 // 指定要加載的 dotenv 檔案名稱
-dotenv.config({ path: 'dev.env' });
+dotenv.config(); // 預設就會讀取同目錄下的 .env
 
 // 中介軟體
 // 已移至各路由中使用
