@@ -1,3 +1,4 @@
+import 'dotenv/config'; // <--- 在第一行加入這句，確保環境變數在連線池建立前就加載
 import mysql from 'mysql2/promise';
 
 // const {

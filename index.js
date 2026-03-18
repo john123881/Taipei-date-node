@@ -1,3 +1,6 @@
+// 存取`.env`設定檔案使用
+import 'dotenv/config.js';
+
 // 引入 express
 import express from 'express';
 import https from 'https';
@@ -17,14 +20,13 @@ import {
 } from './utils/otp_service.js';
 import dotenv from 'dotenv';
 // 指定要加載的 dotenv 檔案名稱
-dotenv.config({ path: 'dev.env' });
+dotenv.config(); // 預設就會讀取同目錄下的 .env
 
 const { SMTP_TO_EMAIL, SMTP_TO_PASSWORD } = process.env;
 
 // 中介軟體，存取隱私會員資料用
 import authenticate from './middlewares/authenticate.js';
-// 存取`.env`設定檔案使用
-import 'dotenv/config.js';
+
 
 import {
     communityRouter,
