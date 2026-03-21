@@ -8,6 +8,8 @@ import mysqlSession from 'express-mysql-session';
 import db from './utils/mysql2-connect.js';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import http from 'http';
+import { initSocket } from './utils/socket-handler.js';
 
 // 指定要加載的 dotenv 檔案名稱
 dotenv.config(); // 預設就會讀取同目錄下的 .env
@@ -179,7 +181,12 @@ app.use('/', express.static('public'));
 
 // server 偵聽
 const port = process.env.PORT || 3002;
-app.listen(port, '0.0.0.0', () => {
+const server = http.createServer(app);
+
+// 初始化 Socket.IO
+initSocket(server);
+
+server.listen(port, '0.0.0.0', () => {
     const mode = process.env.NODE_ENV || 'production';
     console.log(`[${mode.toUpperCase()}] Server Started at http://localhost:${port}`);
 });

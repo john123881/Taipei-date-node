@@ -2,14 +2,10 @@ import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 import chalk from 'chalk';
 // 指定要加載的 dotenv 檔案名稱
-dotenv.config({ path: 'dev.env' });
-
 const { SMTP_TO_EMAIL, SMTP_TO_PASSWORD } = process.env;
 
-// console.log({ SMTP_TO_EMAIL, SMTP_TO_PASSWORD });
-
 const transporter = nodemailer.createTransport({
-    host: 'stmp.gmail.com',
+    host: 'smtp.gmail.com',
     port: 465,
     secure: true, // use TLS
     service: 'Gmail',

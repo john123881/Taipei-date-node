@@ -1,7 +1,5 @@
 import * as OTPAuth from 'otpauth';
 import dotenv from 'dotenv';
-// 指定要加載的 dotenv 檔案名稱
-dotenv.config({ path: 'dev.env' });
 const { OTP_SECRET } = process.env;
 
 let totp = null;

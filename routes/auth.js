@@ -50,8 +50,8 @@ authRouter.post('/login', async (req, res) => {
         const result = await loginUser(email, password);
         res.json(result);
     } catch (error) {
-        console.error('Login Error:', error);
-        res.status(500).json({ success: false, error: '伺服器錯誤' });
+        console.error('Login Error details:', error); // Log full error details
+        res.status(500).json({ success: false, error: '伺服器錯誤', details: error.message });
     }
 });
 
