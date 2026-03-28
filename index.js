@@ -74,6 +74,11 @@ app.use(
         resave: true,
         secret: process.env.SESSION_SECRET,
         store: sessionStore,
+        cookie: {
+            httpOnly: true,
+            secure: true, // Render 是 HTTPS
+            sameSite: 'none', // 跨網域必備
+        },
     })
 );
 
