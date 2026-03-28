@@ -31,11 +31,11 @@ const getUser = (username) => {
 // Get Notification router is in routes/home
 
 io.on('connection', (socket) => {
-    console.log('someone has connected!');
+    // console.log('someone has connected!');
 
     socket.on('newUser', (username) => {
         addNewUser(username, socket.id);
-        console.log(`Added new user: ${username}`);
+        // console.log(`Added new user: ${username}`);
     });
 
     socket.on('sendNotification', async (data) => {
@@ -69,7 +69,7 @@ io.on('connection', (socket) => {
 
             // console.log(notiId);
 
-            console.log('Notification saved to database');
+            // console.log('Notification saved to database');
 
             // 向發送者回應通知已成功保存
             socket.emit('notificationSaved', {
@@ -92,11 +92,13 @@ io.on('connection', (socket) => {
                     message,
                     avatar,
                 });
+                /*
                 console.log(
                     `Notification sent from ${senderName} to ${receiverName}: ${type}`
                 );
+                */
             } else {
-                console.log(`Receiver ${receiverName} not found.`);
+                // console.log(`Receiver ${receiverName} not found.`);
             }
         } catch (error) {
             console.error('Failed to save notification:', error);
@@ -178,7 +180,7 @@ io.on('connection', (socket) => {
     });
 
     socket.on('disconnect', () => {
-        console.log('someone has left');
+        // console.log('someone has left');
         removeUser(socket.id);
     });
 });

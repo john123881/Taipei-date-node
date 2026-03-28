@@ -8,7 +8,6 @@ const barBookingListRouter = express.Router();
 
 // 獲得所有酒吧預約列表
 barBookingListRouter.get(bar.getBarBookingList, authenticate, async (req, res) => {
-    console.log('1', req.my_jwt);
     try {
         const results = await getBarBookingList();
         res.json(results);

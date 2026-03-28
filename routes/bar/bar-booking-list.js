@@ -38,11 +38,7 @@ barBookingListRouter.get(
 );
 
 barBookingListRouter.delete(bar.deleteBarBooking, async (req, res) => {
-    const { barBookingId } = req.body;
-
-    console.log('body', req.body);
-
-    console.log('barBooingId', barBookingId);
+    const barBookingId = +req.body.bar_booking_id;
 
     if (!barBookingId) {
         return res.status(400).json({

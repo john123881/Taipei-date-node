@@ -31,7 +31,7 @@ export default function authenticate(req, res, next) {
             req.my_jwt = jsonwebtoken.verify(token2, process.env.JWT_SECRET);
             // console.log('my_jwt:', req.my_jwt);
         } catch (ex) {
-            console.log({ ex });
+            // console.log({ ex });
         }
     }
     next();

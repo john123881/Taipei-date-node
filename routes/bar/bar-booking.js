@@ -15,7 +15,6 @@ barBookingRouter.post(bar.createBarBooking, async (req, res) => {
         bar_time_slot_id,
     } = req.body;
 
-    console.log('Received booking data:', req.body);
 
     if (
         !user_id ||

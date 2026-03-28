@@ -47,7 +47,7 @@ router.post(trip.createPlansAndCalendar, authenticate, async (req, res) => {
         error: '',
         code: 0,
     };
-    console.log('bodyData:', bodyData);
+
     if (!req.my_jwt?.id) {
         output.success = false;
         output.code = 430;
@@ -64,7 +64,6 @@ router.post(trip.createPlansAndCalendar, authenticate, async (req, res) => {
         req.body.tripPlan, // Extract the nested plan data
         req.body.calendarData || {} // Provide an empty object if no calendar data exists
     );
-    console.log('Results from service:', results);
 
     res.json(results);
 });

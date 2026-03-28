@@ -7,7 +7,6 @@ import authenticate from '../../middlewares/authenticate.js';
 const barListAuthRouter = express.Router();
 
 barListAuthRouter.get(bar.getBarList, authenticate, async (req, res) => {
-    console.log('1', req.my_jwt);
     if (!req.my_jwt?.id) {
         return res.json({
             error: 'error',
