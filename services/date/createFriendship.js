@@ -25,7 +25,7 @@ export const createFriendship = async (user_id1, user_id2, friendship_status = '
                 user_id2: u2,
                 friendship_status,
                 send_at: new Date(),
-                confirmed_at: null,
+                confirmed_at: friendship_status === 'accepted' ? new Date() : null,
                 updated_at: new Date(),
             }
         });

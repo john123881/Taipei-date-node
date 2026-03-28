@@ -23,7 +23,7 @@ gameRecordRouter.post(account.gameRecordUpload, authenticate, async (req, res) =
     const sid = +req.params.sid || 0;
     const { gameScore, gameTime } = req.body;
 
-    if (!gameScore || !gameTime) {
+    if (typeof gameScore === 'undefined' || gameScore === null || !gameTime) {
         output.msg = '缺少必要資訊';
         return res.json(output);
     }

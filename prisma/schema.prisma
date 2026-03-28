@@ -341,7 +341,7 @@ model friendships {
   user_id2                                      Int
   friendship_status                             String                @db.VarChar(255)
   send_at                                       DateTime              @default(now()) @db.Timestamp(0)
-  confirmed_at                                  DateTime              @default(now()) @db.Timestamp(0)
+  confirmed_at                                  DateTime?             @default(now()) @db.Timestamp(0)
   updated_at                                    DateTime              @default(now()) @db.Timestamp(0)
   member_user_friendships_user_id1Tomember_user member_user           @relation("friendships_user_id1Tomember_user", fields: [user_id1], references: [user_id], onDelete: Cascade, onUpdate: NoAction, map: "friendships_ibfk_1")
   member_user_friendships_user_id2Tomember_user member_user           @relation("friendships_user_id2Tomember_user", fields: [user_id2], references: [user_id], onDelete: Cascade, onUpdate: NoAction, map: "friendships_ibfk_2")

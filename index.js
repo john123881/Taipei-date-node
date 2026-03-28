@@ -78,12 +78,12 @@ app.use('/', authRouter);
 // 會員模組
 app.use(
     '/account',
+    accountRouter.gameRecordRouter,
     accountRouter.addDataRouter,
     accountRouter.profileRouter,
     accountRouter.editProfileRouter,
     accountRouter.uploadAvatarRouter,
     accountRouter.changePasswordRouter,
-    accountRouter.gameRecordRouter,
     accountRouter.recordPointRouter,
     accountRouter.recordGameRouter,
     accountRouter.collectPostRouter,
