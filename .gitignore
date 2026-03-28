@@ -43,9 +43,7 @@ next-env.d.ts
 dev.env
 
 # Security: private keys and certificates
-/cert/*.pem
-/cert/*.key
-/cert/csr.pem
+/cert/
 
 # Database: Prisma migration and engine files
 /prisma/migrations-backup

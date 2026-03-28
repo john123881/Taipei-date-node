@@ -39,9 +39,7 @@ app.use(express.json());
 
 const corsOption = {
     credentials: true,
-    origin: (origin, callback) => {
-        callback(null, true);
-    },
+    origin: process.env.CORS_ORIGIN || true, // 如果沒設就不限制（開發用），有設就限制（生產用）
 };
 app.use(cors(corsOption));
 
