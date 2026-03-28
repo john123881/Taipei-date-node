@@ -3,6 +3,7 @@ import http from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
 import jsonwebtoken from 'jsonwebtoken';
+import logger from './utils/logger.js';
 
 // 建立 Express 應用程式
 const app = express();

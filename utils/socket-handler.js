@@ -3,6 +3,7 @@ import jsonwebtoken from 'jsonwebtoken';
 import prisma from './prisma-client.js';
 import cookie from 'cookie';
 import { isOriginAllowed } from './cors-config.js';
+import logger from './logger.js';
 
 let onlineUsers = []; // [{ username, userId, socketId }]
 

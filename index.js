@@ -13,6 +13,7 @@ import sessionMiddleware from './config/session-config.js';
 import globalLocals from './middlewares/global-locals.js';
 import { notFoundHandler, globalErrorHandler } from './middlewares/error-handler.js';
 import { initSocket } from './utils/socket-handler.js';
+import logger from './utils/logger.js';
 
 // 路由
 import {
