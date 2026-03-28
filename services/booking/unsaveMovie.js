@@ -1,7 +1,10 @@
-import db from '../../utils/mysql2-connect.js';
+import prisma from '../../utils/prisma-client.js';
 
 export const unsaveMovie = async (movieId, userId) => {
-    const query = `DELETE FROM booking_movie_saved WHERE movie_id = ? AND user_id = ?`;
-    const [results] = await db.query(query, [movieId, userId]);
-    return results;
+    return await prisma.booking_movie_saved.deleteMany({
+        where: {
+            movie_id: Number(movieId),
+            user_id: Number(userId),
+        },
+    });
 };

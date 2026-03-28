@@ -1,8 +1,10 @@
-import db from '../../utils/mysql2-connect.js';
+import prisma from '../../utils/prisma-client.js';
 
 export const getRandomPosts = async (page = 1, limit = 12) => {
-    const offset = (page - 1) * limit; // 計算起始位置
-    const query = `
+    const offset = (Number(page) - 1) * Number(limit);
+    
+    // queryRaw handles RAND() which is not native to Prisma
+    const results = await prisma.$queryRaw`
         SELECT 
             posts.post_id, 
             posts.context AS post_context,
@@ -26,12 +28,9 @@ export const getRandomPosts = async (page = 1, limit = 12) => {
             posts.post_id = photos.post_id
         ORDER BY 
             RAND() 
-        LIMIT ? OFFSET ?`;
+        LIMIT ${Number(limit)} OFFSET ${Number(offset)}`;
 
-    const [results] = await db.query(query, [limit, offset]); // 傳遞limit和offset值
-
-    // 將 BLOB 數據轉換為 Base64 字符串
-    const posts = results.map((post) => {
+    return results.map((post) => {
         if (post.img) {
             const imageBase64 = Buffer.from(post.img).toString('base64');
             return {
@@ -41,5 +40,4 @@ export const getRandomPosts = async (page = 1, limit = 12) => {
         }
         return post;
     });
-    return posts;
 };

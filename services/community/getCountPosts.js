@@ -1,11 +1,10 @@
-import db from '../../utils/mysql2-connect.js';
+import prisma from '../../utils/prisma-client.js';
 
 export const getCountPosts = async (userId) => {
-    const query = `
-    SELECT COUNT(*) AS PostCount 
-    FROM comm_post 
-    WHERE user_id = ?
-    `;
-    const [results] = await db.query(query, [userId]);
-    return results;
+    const count = await prisma.comm_post.count({
+        where: {
+            user_id: Number(userId),
+        },
+    });
+    return [{ PostCount: count }];
 };

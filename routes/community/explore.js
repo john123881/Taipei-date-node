@@ -5,10 +5,15 @@ import { getRandomPosts } from '../../services/index.js';
 const router = express.Router();
 
 router.get(community.getRandomPosts, async (req, res) => {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 12; // 默認每頁12個貼文
-    const results = await getRandomPosts(page, limit);
-    res.json(results);
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 12;
+        const results = await getRandomPosts(page, limit);
+        res.json(results);
+    } catch (error) {
+        console.error('getRandomPosts error:', error);
+        res.status(500).json({ status: false, message: '伺服器錯誤', error: error.message });
+    }
 });
 
 export default router;

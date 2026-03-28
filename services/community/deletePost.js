@@ -1,9 +1,11 @@
-import db from '../../utils/mysql2-connect.js';
+import prisma from '../../utils/prisma-client.js';
 
 export const deletePost = async (postId) => {
-    const query = `DELETE FROM comm_post WHERE post_id = ?`;
-
-    const [results] = await db.query(query, [postId]);
+    const results = await prisma.comm_post.delete({
+        where: {
+            post_id: Number(postId),
+        },
+    });
 
     return results;
 };

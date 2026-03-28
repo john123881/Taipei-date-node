@@ -1,27 +1,28 @@
-import db from '../../utils/mysql2-connect.js';
+import prisma from '../../utils/prisma-client.js';
 
 export const getBarListRandom = async () => {
-    const sql = `
-    SELECT 
-        bars.*, 
-        bar_area.bar_area_name,
-        bar_type.bar_type_name,
-        bar_pic.bar_pic_id,
-        bar_pic.bar_pic_name,
-        bar_pic.bar_img
-    FROM 
-        bars
-    LEFT JOIN 
-        bar_area ON bars.bar_area_id = bar_area.bar_area_id
-    LEFT JOIN 
-        bar_type ON bars.bar_type_id = bar_type.bar_type_id
-    LEFT JOIN
-        bar_pic ON bars.bar_id = bar_pic.bar_id
-    ORDER BY 
-        RAND()
-    LIMIT 3;
-  `;
-    const [results] = await db.query(sql);
+    // 使用 $queryRaw 來進行 RAND() 查詢，這是 MySQL 中最直接的方式
+    const results = await prisma.$queryRaw`
+        SELECT 
+            b.*, 
+            ba.bar_area_name,
+            bt.bar_type_name,
+            bp.bar_pic_id,
+            bp.bar_pic_name,
+            bp.bar_img
+        FROM 
+            bars b
+        LEFT JOIN 
+            bar_area ba ON b.bar_area_id = ba.bar_area_id
+        LEFT JOIN 
+            bar_type bt ON b.bar_type_id = bt.bar_type_id
+        LEFT JOIN
+            bar_pic bp ON b.bar_id = bp.bar_id
+        ORDER BY 
+            RAND()
+        LIMIT 3
+    `;
+
     // 將 BLOB 數據轉換為 Base64 字符串
     const pics = results.map((pic) => {
         if (pic.bar_img) {
@@ -35,5 +36,4 @@ export const getBarListRandom = async () => {
         return pic;
     });
     return pics;
-    return results;
 };

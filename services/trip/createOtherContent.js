@@ -1,75 +1,56 @@
-import db from '../../utils/mysql2-connect.js';
+import prisma from '../../utils/prisma-client.js';
 
 // 將他人的行程加入自己的日曆
-export const createOtherContent = async (req, res) => {
-    const connection = await db.getConnection();
+export const createOtherContent = async (tripPlan, tripDetails) => {
+    const {
+        user_id,
+        trip_title,
+        trip_content,
+        trip_description,
+        trip_notes,
+        trip_date,
+        trip_draft,
+        trip_pic,
+    } = tripPlan;
+
+    // 確保所有必需欄位都存在
+    if (!user_id || !trip_title || !trip_date) {
+        throw new Error('缺少必需欄位');
+    }
 
     try {
-        // 開始資料庫事務
-        await connection.beginTransaction();
+        return await prisma.$transaction(async (tx) => {
+            // 插入 trip_plan
+            const plan = await tx.trip_plans.create({
+                data: {
+                    user_id: Number(user_id),
+                    trip_title,
+                    trip_content,
+                    trip_description,
+                    trip_notes,
+                    trip_date: new Date(trip_date),
+                    trip_draft: Boolean(trip_draft),
+                    created_at: new Date(),
+                    trip_pic,
+                },
+            });
 
-        const {
-            user_id,
-            trip_title,
-            trip_content,
-            trip_description,
-            trip_notes,
-            trip_date,
-            trip_draft,
-            trip_pic,
-        } = req.body.tripPlan;
+            // 為每個 trip_detail 插入數據
+            if (tripDetails && tripDetails.length > 0) {
+                await tx.trip_details.createMany({
+                    data: tripDetails.map((detail) => ({
+                        trip_plan_id: plan.trip_plan_id,
+                        block: detail.block ? Number(detail.block) : null,
+                        movie_id: detail.movie_id ? Number(detail.movie_id) : null,
+                        bar_id: detail.bar_id ? Number(detail.bar_id) : null,
+                    })),
+                });
+            }
 
-        // 確保所有必需欄位都存在
-        if (!user_id || !trip_title || !trip_date) {
-            throw new Error('缺少必需欄位');
-        }
-
-        const tripDetails = req.body.tripDetails;
-
-        // 插入 trip_plan
-        const [tripPlanResult] = await connection.execute(
-            `INSERT INTO trip_plans (user_id, trip_title, trip_content, trip_description, trip_notes, trip_date, trip_draft, created_at, trip_pic) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), ?)`,
-            [
-                user_id,
-                trip_title,
-                trip_content,
-                trip_description,
-                trip_notes,
-                trip_date,
-                trip_draft,
-                trip_pic,
-            ]
-        );
-
-        const tripPlanId = tripPlanResult.insertId; // 獲取新增的 trip_plan 的 ID
-
-        // 為每個 trip_detail 插入數據
-        for (const detail of tripDetails) {
-            await connection.execute(
-                `INSERT INTO trip_details (trip_plan_id, block, movie_id, bar_id) VALUES (?, ?, ?, ?)`,
-                [
-                    tripPlanId,
-                    detail.block || null,
-                    detail.movie_id || null,
-                    detail.bar_id || null,
-                ]
-            );
-        }
-
-        // 提交事務
-        await connection.commit();
-        res.send({ success: true, tripPlanId });
-    } catch (error) {
-        // 事務回滾
-        await connection.rollback();
-        console.error('Transaction error:', error);
-        res.status(500).send({
-            error: 'Transaction failed',
-            details: error.message,
+            return plan;
         });
-    } finally {
-        // 釋放資料庫連接
-        connection.release();
+    } catch (error) {
+        console.error('Error in createOtherContent transaction:', error);
+        throw error;
     }
 };

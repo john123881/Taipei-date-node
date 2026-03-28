@@ -1,13 +1,14 @@
-import db from '../../utils/mysql2-connect.js';
+import prisma from '../../utils/prisma-client.js';
 
 export const getSuggestUsers = async () => {
-    const query = `
-    SELECT user_id, email, username, avatar
-    FROM member_user 
-    ORDER BY RAND() 
-    LIMIT 5`;
-
-    const [results] = await db.query(query);
+    // Prisma does not natively support ORDER BY RAND()
+    // Using $queryRaw as a safe fallback
+    const results = await prisma.$queryRaw`
+        SELECT user_id, email, username, avatar
+        FROM member_user 
+        ORDER BY RAND() 
+        LIMIT 5
+    `;
 
     return results;
 };

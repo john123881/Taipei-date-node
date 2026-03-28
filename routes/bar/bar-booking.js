@@ -45,7 +45,7 @@ barBookingRouter.post(bar.createBarBooking, async (req, res) => {
             booking: newBarBooking,
         });
     } catch (err) {
-        console.error('新增訂位錯誤:', err);
+        console.error('createBarBooking error:', err);
         res.status(500).json({
             status: false,
             message: '訂位新增失敗',
@@ -56,13 +56,13 @@ barBookingRouter.post(bar.createBarBooking, async (req, res) => {
 
 // 獲得指定的酒吧的預約列表
 barBookingRouter.get(bar.getBarBookingById, async (req, res) => {
-    const { bar_id } = req.params;
     try {
+        const { bar_id } = req.params;
         const results = await getBarBookingById(bar_id);
         res.json(results);
     } catch (error) {
-        console.error(`Error fetching bookings for bar ${bar_id}:`, error);
-        res.status(500).send('Internal Server Error');
+        console.error('getBarBookingById error:', error);
+        res.status(500).json({ status: false, message: '伺服器錯誤', error: error.message });
     }
 });
 export default barBookingRouter;

@@ -6,39 +6,46 @@ import authenticate from '../../middlewares/authenticate.js';
 const barRatingRouter = express.Router();
 
 barRatingRouter.get(bar.getBarRating, async (req, res) => {
-  const { bar_id } = req.params;
-  const results = await getBarRatingById(bar_id);
-  res.json(results);
-})
+    try {
+        const { bar_id } = req.params;
+        const results = await getBarRatingById(bar_id);
+        res.json(results);
+    } catch (error) {
+        console.error('getBarRatingById error:', error);
+        res.status(500).json({ status: false, message: '伺服器錯誤', error: error.message });
+    }
+});
 
-barRatingRouter.get("/bar-rating", async (req, res) => {
-  try {
-    const results = await getBarRating();
-    res.json(results);
-  } catch (error) {
-    console.error("Error fetching all bar ratings:", error);
-    res.status(500).send("Internal Server Error");
-  }
+barRatingRouter.get('/bar-rating', async (req, res) => {
+    try {
+        const results = await getBarRating();
+        res.json(results);
+    } catch (error) {
+        console.error('getBarRating error:', error);
+        res.status(500).json({ status: false, message: '伺服器錯誤', error: error.message });
+    }
 });
 
 // 取得指定酒吧的評分
 barRatingRouter.get('/bar-rating/:bar_id', async (req, res) => {
     try {
-        const barId = req.params.bar_id;
-        const result = await getBarRating(barId);
-        res.json(result);
+        const { bar_id } = req.params;
+        const results = await getBarRatingById(bar_id);
+        res.json(results);
     } catch (error) {
-        res.status(500).json({ message: 'Server error', error });
+        console.error('getBarRatingById error:', error);
+        res.status(500).json({ status: false, message: '伺服器錯誤', error: error.message });
     }
 });
 
 // 取得所有酒吧的评分信息
 barRatingRouter.get('/bar-ratings', async (req, res) => {
     try {
-        const result = await getBarRating();
-        res.json(result);
+        const results = await getBarRating();
+        res.json(results);
     } catch (error) {
-        res.status(500).json({ message: 'Server error', error });
+        console.error('getBarRating error:', error);
+        res.status(500).json({ status: false, message: '伺服器錯誤', error: error.message });
     }
 });
 
@@ -57,18 +64,14 @@ barRatingRouter.post(bar.createBarRating, authenticate, async (req, res) => {
     }
 
     try {
-        const newRating = await createBarRating(
-            bar_id,
-            bar_rating_star,
-            user_id
-        );
+        const newRating = await createBarRating(bar_id, bar_rating_star, user_id);
         res.status(201).json({
             status: true,
             message: '評分新增成功',
             rating: newRating,
         });
     } catch (err) {
-        console.error('新增評分錯誤:', err);
+        console.error('createBarRating error:', err);
         res.status(500).json({
             status: false,
             message: '評分新增失敗',

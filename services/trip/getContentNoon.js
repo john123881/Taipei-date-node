@@ -1,16 +1,10 @@
-import db from "../../utils/mysql2-connect.js";
+import prisma from '../../utils/prisma-client.js';
 
-export const getContentNoon = async (req, res) => {
-  const { trip_plan_id } = req.params;
-  try {
-    const [results] = await db.query(
-      "SELECT * FROM `trip_details` WHERE `block` = 2 AND `trip_plan_id`=?",
-      [trip_plan_id]
-    );
-    // 發送回應到用戶端，而不只是返回結果
-    res.json(results);
-  } catch (error) {
-    console.error("Error fetching data from the database", error);
-    res.status(500).send("Error fetching data from the database");
-  }
+export const getContentNoon = async (trip_plan_id) => {
+    return await prisma.trip_details.findMany({
+        where: {
+            trip_plan_id: Number(trip_plan_id),
+            block: 2,
+        },
+    });
 };

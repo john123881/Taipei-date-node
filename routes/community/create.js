@@ -44,7 +44,7 @@ router.post(community.createPost, authenticate, async (req, res) => {
             post: newPost,
         });
     } catch (err) {
-        console.error('新增貼文錯誤:', err);
+        console.error('createPost error:', err);
         res.status(500).json({
             status: false,
             message: '貼文新增失敗',
@@ -54,8 +54,6 @@ router.post(community.createPost, authenticate, async (req, res) => {
 });
 
 router.post(community.uploadPhoto, authenticate, async (req, res) => {
-    // authenticate : 授權後，!req.my_jwt?.id判斷有無授權成功
-
     try {
         if (!req.files || !req.body.postId) {
             return res.status(400).send({
@@ -64,11 +62,9 @@ router.post(community.uploadPhoto, authenticate, async (req, res) => {
             });
         }
 
-        // 使用輸入框的名稱來獲取上傳檔案 (例如 "photo")
         let photo = req.files.photo;
-        let postId = req.body.postId; // 從請求中獲取 postId
+        let postId = req.body.postId;
 
-        // 檢查 photo 是否存在
         if (!photo) {
             return res.status(400).send({
                 status: false,
@@ -77,11 +73,9 @@ router.post(community.uploadPhoto, authenticate, async (req, res) => {
         }
 
         try {
-            // 讀取文件內容
             const photoName = photo.name;
             const imageData = photo.data;
 
-            // 模擬將文件信息和內容儲存到數據庫中的函數（需自行實現該函數）
             const result = await uploadPhoto(photoName, postId, imageData);
 
             res.json({
@@ -95,7 +89,7 @@ router.post(community.uploadPhoto, authenticate, async (req, res) => {
                 post: result,
             });
         } catch (err) {
-            console.error('檔案上傳到數據庫過程中出錯:', err);
+            console.error('uploadPhoto error:', err);
             res.status(500).json({
                 status: false,
                 message: 'Server error',
@@ -103,7 +97,7 @@ router.post(community.uploadPhoto, authenticate, async (req, res) => {
             });
         }
     } catch (err) {
-        console.error('處理請求過程中出錯:', err);
+        console.error('uploadPhoto processing error:', err);
         res.status(500).json({
             status: false,
             message: 'Server error',
@@ -113,8 +107,6 @@ router.post(community.uploadPhoto, authenticate, async (req, res) => {
 });
 
 router.post(community.createEvent, authenticate, async (req, res) => {
-    // authenticate : 授權後，!req.my_jwt?.id判斷有無授權成功
-
     const {
         title,
         description,
@@ -127,21 +119,10 @@ router.post(community.createEvent, authenticate, async (req, res) => {
         endTime,
     } = req.body;
 
-    // 檢查活動細節是否存在
-    if (
-        !title ||
-        !description ||
-        !status ||
-        !location ||
-        !userId ||
-        !startDate ||
-        !startTime ||
-        !endDate ||
-        !endTime
-    ) {
+    if (!title || !userId) {
         return res.status(400).json({
             status: false,
-            message: '必須提供活動內容',
+            message: '必須提供活動標題和用戶ID',
         });
     }
 
@@ -163,7 +144,7 @@ router.post(community.createEvent, authenticate, async (req, res) => {
             event: newEvent,
         });
     } catch (err) {
-        console.error('新增貼文錯誤:', err);
+        console.error('createEvent error:', err);
         res.status(500).json({
             status: false,
             message: '活動新增失敗',
@@ -269,11 +250,8 @@ router.post(community.addComment, authenticate, async (req, res) => {
 });
 
 router.put(community.editPost, authenticate, async (req, res) => {
-    // authenticate : 授權後，!req.my_jwt?.id判斷有無授權成功
-
     const { context, postId } = req.body;
 
-    // 檢查 context 和 userId 是否存在
     if (!context || !postId) {
         return res.status(400).json({
             status: false,
@@ -290,7 +268,7 @@ router.put(community.editPost, authenticate, async (req, res) => {
             post: result,
         });
     } catch (err) {
-        console.error('貼文更新錯誤:', err);
+        console.error('editPost error:', err);
         res.status(500).json({
             status: false,
             message: '貼文更新失敗',
@@ -300,11 +278,7 @@ router.put(community.editPost, authenticate, async (req, res) => {
 });
 
 router.put(community.editPostPhoto, authenticate, async (req, res) => {
-    // authenticate : 授權後，!req.my_jwt?.id判斷有無授權成功
-
     try {
-        // console.log('Files:', req.files);
-        // console.log('Body:', req.body);
         if (!req.files || !req.body.postId) {
             return res.status(400).send({
                 status: false,
@@ -312,11 +286,9 @@ router.put(community.editPostPhoto, authenticate, async (req, res) => {
             });
         }
 
-        // 使用輸入框的名稱來獲取上傳檔案 (例如 "photo")
         let photo = req.files.photo;
-        let postId = req.body.postId; // 從請求中獲取 postId
+        let postId = req.body.postId;
 
-        // 檢查 photo 是否存在
         if (!photo) {
             return res.status(400).send({
                 status: false,
@@ -324,11 +296,9 @@ router.put(community.editPostPhoto, authenticate, async (req, res) => {
             });
         }
         try {
-            // 讀取文件內容
             const photoName = photo.name;
             const imageData = photo.data;
 
-            // 模擬將文件信息和內容儲存到數據庫中的函數（需自行實現該函數）
             const result = await editPostPhoto(photoName, imageData, postId);
 
             res.json({
@@ -342,8 +312,7 @@ router.put(community.editPostPhoto, authenticate, async (req, res) => {
                 post: result,
             });
         } catch (err) {
-            // console.log('result', result);
-            console.error('更新檔案上傳到數據庫過程中出錯:', err);
+            console.error('editPostPhoto error:', err);
             res.status(500).json({
                 status: false,
                 message: 'Server error',
@@ -351,7 +320,7 @@ router.put(community.editPostPhoto, authenticate, async (req, res) => {
             });
         }
     } catch (err) {
-        console.error('處理請求過程中出錯:', err);
+        console.error('editPostPhoto processing error:', err);
         res.status(500).json({
             status: false,
             message: 'Server error',
@@ -374,22 +343,10 @@ router.put(community.editEvent, authenticate, async (req, res) => {
         eventId,
     } = req.body;
 
-    // console.log('Received body:', req.body);
-
-    // 檢查活動細節是否存在
-    if (
-        !title ||
-        !description ||
-        !location ||
-        !startDate ||
-        !startTime ||
-        !endDate ||
-        !endTime ||
-        !eventId
-    ) {
+    if (!title || !eventId) {
         return res.status(400).json({
             status: false,
-            message: '必須提供活動內容',
+            message: '必須提供活動標題和用戶ID',
         });
     }
 
@@ -411,7 +368,7 @@ router.put(community.editEvent, authenticate, async (req, res) => {
             event: result,
         });
     } catch (err) {
-        console.error('活動更新錯誤:', err);
+        console.error('editEvent error:', err);
         res.status(500).json({
             status: false,
             message: '活動更新失敗',
@@ -421,21 +378,17 @@ router.put(community.editEvent, authenticate, async (req, res) => {
 });
 
 router.put(community.editEventPhoto, authenticate, async (req, res) => {
-    // authenticate : 授權後，!req.my_jwt?.id判斷有無授權成功
-
     try {
         if (!req.files || !req.body.eventId) {
             return res.status(400).send({
                 status: false,
-                message: '必須提供照片和活動ID',
+                message: '必須提供照片 and 活動ID',
             });
         }
 
-        // 使用輸入框的名稱來獲取上傳檔案 (例如 "photo")
         let photo = req.files.photo;
-        let eventId = req.body.eventId; // 從請求中獲取 postId
+        let eventId = req.body.eventId;
 
-        // 檢查 photo 是否存在
         if (!photo) {
             return res.status(400).send({
                 status: false,
@@ -443,11 +396,9 @@ router.put(community.editEventPhoto, authenticate, async (req, res) => {
             });
         }
         try {
-            // 讀取文件內容
             const photoName = photo.name;
             const imageData = photo.data;
 
-            // 模擬將文件信息和內容儲存到數據庫中的函數（需自行實現該函數）
             const result = await editEventPhoto(photoName, imageData, eventId);
 
             res.json({
@@ -461,16 +412,15 @@ router.put(community.editEventPhoto, authenticate, async (req, res) => {
                 event: result,
             });
         } catch (err) {
-            // console.log('result', result);
-            console.error('更新檔案上傳到數據庫過程中出錯:', err);
+            console.error('editEventPhoto internal error:', err);
             res.status(500).json({
                 status: false,
-                message: 'Server error',
+                message: 'Internal server error',
                 error: err.message,
             });
         }
     } catch (err) {
-        // console.error('處理請求過程中出錯:', err);
+        console.error('editEventPhoto processing error:', err);
         res.status(500).json({
             status: false,
             message: 'Server error',

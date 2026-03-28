@@ -1,46 +1,44 @@
-import db from '../../utils/mysql2-connect.js';
+import prisma from '../../utils/prisma-client.js';
 
 export const getBarBookingById = async (bar_id) => {
-    // const { bar_id } = req.params;
-    const sql = `
-  SELECT
-      bar_booking.*,
-      bars.bar_id,
-      bars.bar_name,
-      bars.bar_addr,
-      bars.bar_contact,
-      bar_time_slots.bar_time_slot_id,
-      member_user.user_id,
-      member_user.username,
-      bar_pic.bar_pic_id,
-      bar_pic.bar_pic_name,
-      bar_pic.bar_img
-  FROM
-      bar_booking
-  LEFT JOIN
-      bars ON bar_booking.bar_id = bars.bar_id
-  LEFT JOIN
-      bar_time_slots ON bar_booking.bar_time_slot_id = bar_time_slots.bar_time_slot_id
-  LEFT JOIN
-      member_user ON bar_booking.user_id = member_user.user_id
-  LEFT JOIN
-      bar_pic ON bar_booking.bar_id = bar_pic.bar_id
-  WHERE 
-    bar_booking.bar_id = ?
-  `;
-    const [results] = await db.query(sql, [bar_id]);
-    // 將 BLOB 數據轉換為 Base64 字符串
-    const pics = results.map((pic) => {
-        if (pic.bar_img) {
-            const imageBase64 = Buffer.from(pic.bar_img).toString('base64');
-
-            return {
-                ...pic,
-                bar_img: `data:image/jpeg;base64,${imageBase64}`,
-            };
-        }
-        return pic;
+    const results = await prisma.bar_booking.findMany({
+        where: {
+            bar_id: Number(bar_id),
+        },
+        include: {
+            bars: {
+                include: {
+                    bar_pic: true,
+                },
+            },
+            bar_time_slots: true,
+            member_user: true,
+        },
     });
-    return pics;
-    return results[0];
+
+    // 將資料格式化為扁平結構以符合前端預期，並處理圖片 BLOB
+    return results.map((booking) => {
+        const bar = booking.bars;
+        const firstPic = bar?.bar_pic[0];
+
+        let formatted = {
+            ...booking,
+            bar_id: bar.bar_id,
+            bar_name: bar.bar_name,
+            bar_addr: bar.bar_addr,
+            bar_contact: bar.bar_contact,
+            bar_time_slot_id: booking.bar_time_slot_id,
+            user_id: booking.user_id,
+            username: booking.member_user?.username,
+            bar_pic_id: firstPic?.bar_pic_id,
+            bar_pic_name: firstPic?.bar_pic_name,
+        };
+
+        if (firstPic?.bar_img) {
+            const imageBase64 = Buffer.from(firstPic.bar_img).toString('base64');
+            formatted.bar_img = `data:image/jpeg;base64,${imageBase64}`;
+        }
+
+        return formatted;
+    });
 };

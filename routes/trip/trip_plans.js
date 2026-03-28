@@ -54,11 +54,18 @@ router.post(trip.createPlansAndCalendar, authenticate, async (req, res) => {
         output.error = '沒有授權';
         return res.json(output);
     }
+    // 如果前端傳送的是 { tripPlan: { ... } }，解開它。否則直接使用 req.body。
+    const planData = bodyData.tripPlan || bodyData;
+    // 分離日曆資料，目前預設為空物件 (由 Service 建立基本紀錄)
+    const calendarData = bodyData.calendarData || {};
+
     const results = await createPlansAndCalendar(
-        req.my_jwt.id, // 傳遞 user_id
-        req.body
+        req.my_jwt.id,
+        planData,
+        calendarData
     );
-    console.log(req.body);
+    console.log('Results from service:', results);
+
     res.json(results);
 });
 

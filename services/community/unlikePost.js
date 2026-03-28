@@ -1,7 +1,11 @@
-import db from '../../utils/mysql2-connect.js';
+import prisma from '../../utils/prisma-client.js';
 
 export const unlikePost = async (postId, userId) => {
-    const query = `DELETE FROM comm_likes WHERE post_id = ? AND user_id = ?`;
-    const [results] = await db.query(query, [postId, userId]);
+    const results = await prisma.comm_likes.deleteMany({
+        where: {
+            post_id: Number(postId),
+            user_id: Number(userId),
+        },
+    });
     return results;
 };

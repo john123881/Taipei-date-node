@@ -1,7 +1,11 @@
-import db from '../../utils/mysql2-connect.js';
+import prisma from '../../utils/prisma-client.js';
 
 export const follow = async (userId, FollowingId) => {
-    const query = `INSERT INTO comm_follows(follower_id, following_id) VALUES (?, ?)`;
-    const [results] = await db.query(query, [userId, FollowingId]);
+    const results = await prisma.comm_follows.create({
+        data: {
+            follower_id: Number(userId),
+            following_id: Number(FollowingId),
+        },
+    });
     return results;
 };

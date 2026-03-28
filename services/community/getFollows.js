@@ -1,26 +1,22 @@
-import db from '../../utils/mysql2-connect.js';
+```javascript
+import prisma from '../../utils/prisma-client.js';
 
 export const getFollows = async (followingId, followerId) => {
-    const query = `
-    SELECT 
-        'followers' AS relation_type,
-        COUNT(*) AS count
-    FROM 
-        comm_follows
-    WHERE 
-        following_id = ?
+    const followersCount = await prisma.comm_follows.count({
+        where: {
+            following_id: Number(followingId),
+        },
+    });
 
-    UNION ALL
+    const followingCount = await prisma.comm_follows.count({
+        where: {
+            follower_id: Number(followerId),
+        },
+    });
 
-    SELECT 
-        'following' AS relation_type,
-        COUNT(*) AS count
-    FROM 
-        comm_follows
-    WHERE 
-        follower_id = ?
-    `;
-
-    const [results] = await db.query(query, [followingId, followerId]);
-    return results;
+    return [
+        { relation_type: 'followers', count: followersCount },
+        { relation_type: 'following', count: followingCount },
+    ];
 };
+```

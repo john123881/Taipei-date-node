@@ -1,9 +1,9 @@
-import db from '../../utils/mysql2-connect.js';
+import prisma from '../../utils/prisma-client.js';
 
 export const deleteMovieBooking = async (bookingId) => {
-    const query = `DELETE FROM booking_system WHERE booking_id = ?`;
-
-    const [results] = await db.query(query, [bookingId]);
-
-    return results;
+    return await prisma.booking_system.delete({
+        where: {
+            booking_id: Number(bookingId),
+        },
+    });
 };

@@ -24,43 +24,44 @@ router.get(community.getPosts, async (req, res) => {
 });
 
 router.get(community.getUserPosts, async (req, res) => {
-    // authenticate : 授權後，!req.my_jwt?.id判斷有無授權成功
-    // const output = {
-    //     success: false,
-    //     action: '', // add, remove
-    //     error: '',
-    //     code: 0,
-    //     data: [],
-    // };
+    try {
+        const { userId } = req.params;
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 12;
+        const results = await getUserPosts(userId, page, limit);
 
-    const { userId } = req.params;
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 12; // 默認每頁12個貼文
-    const results = await getUserPosts(userId, page, limit);
+        if (!results || results.length === 0) {
+            return res.json([]);
+        }
 
-    if (!results) {
-        output.success = false;
-        output.code = 440;
-        output.error = '沒有該筆資料';
-        return res.json(output);
+        const newResults = results.map((obj) => ({ ...obj, success: true }));
+        res.json(newResults);
+    } catch (error) {
+        console.error('getUserPosts error:', error);
+        res.status(500).json({ status: false, message: '伺服器錯誤', error: error.message });
     }
-
-    // add success status to results
-    const newResults = results.map((obj) => ({ ...obj, success: true }));
-
-    res.json(newResults);
 });
 
 router.get(community.getFollows, async (req, res) => {
-    const { userId } = req.params;
-    const results = await getFollows(userId, userId);
-    res.json(results);
+    try {
+        const { userId } = req.params;
+        const results = await getFollows(userId, userId);
+        res.json(results);
+    } catch (error) {
+        console.error('getFollows error:', error);
+        res.status(500).json({ status: false, message: '伺服器錯誤', error: error.message });
+    }
 });
 
 router.get(community.getCountPosts, async (req, res) => {
-    const { userId } = req.params;
-    const results = await getCountPosts(userId);
-    res.json(results);
+    try {
+        const { userId } = req.params;
+        const results = await getCountPosts(userId);
+        res.json(results);
+    } catch (error) {
+        console.error('getCountPosts error:', error);
+        res.status(500).json({ status: false, message: '伺服器錯誤', error: error.message });
+    }
 });
 
 router.get(community.getUserInfo, async (req, res) => {
@@ -70,34 +71,17 @@ router.get(community.getUserInfo, async (req, res) => {
 });
 
 router.post(community.follow, authenticate, async (req, res) => {
-    // authenticate : 授權後，!req.my_jwt?.id判斷有無授權成功
-
-    // const output = {
-    //     success: false,
-    //     action: '', // add, remove
-    //     error: '',
-    //     code: 0,
-    //     data: [],
-    // };
-
     const { userId, FollowingId } = req.body;
 
     if (!userId || !FollowingId) {
         return res.status(400).json({
             status: false,
-            message: '必須提供活動ID和用戶ID',
+            message: '必須提供 follower_id 和 following_id',
         });
     }
 
     try {
         const results = await follow(userId, FollowingId);
-
-        // if (!results) {
-        //     output.success = false;
-        //     output.code = 440;
-        //     output.error = '沒有該筆資料';
-        //     return res.json(output);
-        // }
 
         return res.status(201).json({
             status: true,
@@ -105,7 +89,7 @@ router.post(community.follow, authenticate, async (req, res) => {
             data: results,
         });
     } catch (err) {
-        console.error('追蹤錯誤:', err);
+        console.error('follow error:', err);
         res.status(500).json({
             status: false,
             message: '追蹤失敗',
@@ -120,20 +104,20 @@ router.delete(community.unfollow, authenticate, async (req, res) => {
     if (!userId || !FollowingId) {
         return res.status(400).json({
             status: false,
-            message: '必須提供貼文ID和用戶ID',
+            message: '必須提供 follower_id 和 following_id',
         });
     }
 
     try {
         const results = await unfollow(userId, FollowingId);
 
-        return res.status(201).json({
+        return res.status(200).json({
             status: true,
             message: '取消追蹤成功',
             data: results,
         });
     } catch (err) {
-        console.error('取消追蹤錯誤:', err);
+        console.error('unfollow error:', err);
         res.status(500).json({
             status: false,
             message: '取消追蹤失敗',

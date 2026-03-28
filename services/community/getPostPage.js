@@ -1,44 +1,45 @@
-import db from '../../utils/mysql2-connect.js';
+import prisma from '../../utils/prisma-client.js';
 
 export const getPostPage = async (postId) => {
-    const query = `
-        SELECT 
-            posts.post_id, 
-            posts.context AS post_context,
-            posts.created_at,
-            posts.updated_at,
-            posts.user_id AS post_userId,
-            users.email,
-            users.username,
-            users.avatar,
-            photos.photo_name,
-            photos.img
-        FROM 
-            comm_post AS posts
-        LEFT JOIN 
-            member_user AS users 
-        ON 
-            posts.user_id = users.user_id
-        LEFT JOIN 
-            comm_photo AS photos 
-        ON 
-            posts.post_id = photos.post_id
-        WHERE
-            posts.post_id = ?
-        `;
-
-    const [results] = await db.query(query, [postId]);
-
-    // 將 BLOB 數據轉換為 Base64 字符串
-    const posts = results.map((post) => {
-        if (post.img) {
-            const imageBase64 = Buffer.from(post.img).toString('base64');
-            return {
-                ...post,
-                img: `data:image/jpeg;base64,${imageBase64}`,
-            };
-        }
-        return post;
+    const post = await prisma.comm_post.findUnique({
+        where: {
+            post_id: Number(postId),
+        },
+        include: {
+            member_user: {
+                select: {
+                    email: true,
+                    username: true,
+                    avatar: true,
+                },
+            },
+            comm_photo: {
+                select: {
+                    photo_name: true,
+                    img: true,
+                },
+            },
+        },
     });
-    return posts;
+
+    if (!post) return [];
+
+    const photo = post.comm_photo[0];
+    let imgBase64 = null;
+    if (photo && photo.img) {
+        imgBase64 = `data:image/jpeg;base64,${Buffer.from(photo.img).toString('base64')}`;
+    }
+
+    return [{
+        post_id: post.post_id,
+        post_context: post.context,
+        created_at: post.created_at,
+        updated_at: post.updated_at,
+        post_userId: post.user_id,
+        email: post.member_user?.email,
+        username: post.member_user?.username,
+        avatar: post.member_user?.avatar,
+        photo_name: photo?.photo_name,
+        img: imgBase64,
+    }];
 };

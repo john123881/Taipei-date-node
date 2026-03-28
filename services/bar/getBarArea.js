@@ -1,14 +1,11 @@
-import db from '../../utils/mysql2-connect.js';
+import prisma from '../../utils/prisma-client.js';
 
 // 獲取所有酒吧區域列表
 export const getBarArea = async () => {
-    const sql = `
-    SELECT 
-      bar_area_id, 
-      bar_area_name 
-    FROM 
-      bar_area;
-  `;
-    const [results] = await db.query(sql);
-    return results;
+    return await prisma.bar_area.findMany({
+        select: {
+            bar_area_id: true,
+            bar_area_name: true,
+        },
+    });
 };

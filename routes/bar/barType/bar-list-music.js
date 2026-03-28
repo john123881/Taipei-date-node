@@ -5,9 +5,14 @@ import { getBarListMusic } from '../../../services/index.js';
 const barListMusicRouter = express.Router();
 
 // Sports bars
-barListMusicRouter.get(bar.getBarListMusic, async (_req, res) => {
-    const results = await getBarListMusic();
-    res.json(results);
+barListMusicRouter.get(bar.getBarListMusic, async (req, res) => {
+    try {
+        const results = await getBarListMusic();
+        res.json(results);
+    } catch (error) {
+        console.error('getBarListMusic error:', error);
+        res.status(500).json({ status: false, message: '伺服器錯誤', error: error.message });
+    }
 });
 
 export default barListMusicRouter;

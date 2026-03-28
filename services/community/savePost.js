@@ -1,7 +1,11 @@
-import db from '../../utils/mysql2-connect.js';
+import prisma from '../../utils/prisma-client.js';
 
 export const savePost = async (postId, userId) => {
-    const query = `INSERT INTO comm_saved(post_id, user_id) VALUES (?, ?)`;
-    const [results] = await db.query(query, [postId, userId]);
+    const results = await prisma.comm_saved.create({
+        data: {
+            post_id: Number(postId),
+            user_id: Number(userId),
+        },
+    });
     return results;
 };

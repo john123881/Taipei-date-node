@@ -1,7 +1,10 @@
-import db from '../../utils/mysql2-connect.js';
+import prisma from '../../utils/prisma-client.js';
 
 export const unsavedBar = async (barId, userId) => {
-    const query = `DELETE FROM bar_saved WHERE bar_id = ? AND user_id = ?`;
-    const [results] = await db.query(query, [barId, userId]);
-    return results;
+    return await prisma.bar_saved.deleteMany({
+        where: {
+            bar_id: Number(barId),
+            user_id: Number(userId),
+        },
+    });
 };

@@ -1,61 +1,46 @@
-import db from '../../utils/mysql2-connect.js';
+import prisma from '../../utils/prisma-client.js';
 
 export const createPlansAndCalendar = async (
     user_id,
     planData,
-    calendarData
+    calendarData = {}
 ) => {
-    console.log(planData, calendarData);
-    let connection;
     try {
-        // 從通訊埠獲取連接
-        connection = await db.getConnection();
+        const result = await prisma.$transaction(async (tx) => {
+            // 創建行程計畫
+            const plan = await tx.trip_plans.create({
+                data: {
+                    ...planData,
+                    user_id: Number(user_id),
+                    // 確保 trip_draft 是布林值
+                    trip_draft: Boolean(planData.trip_draft),
+                    // 如果有日期字串，轉換為 Date 對象
+                    trip_date: planData.trip_date
+                        ? new Date(planData.trip_date)
+                        : undefined,
+                },
+            });
 
-        // 開始Transaction
-        await connection.beginTransaction();
+            // 創建關聯的日曆數據
+            await tx.trip_calendar.create({
+                data: {
+                    ...calendarData,
+                    trip_plan_id: plan.trip_plan_id,
+                },
+            });
 
-        // 將 user_id 加入 planData
-        const planDataWithUserId = { ...planData, user_id };
-        console.log(planDataWithUserId);
-
-        // 插入 trip_plans 資料 ，這邊之後要讓user_id = 登入者id，現在 user_id 預設值為1
-        const sqlPlans = 'INSERT INTO `trip_plans` SET ?';
-        const [planResults] = await connection.query(sqlPlans, [
-            planDataWithUserId,
-        ]);
-        console.log(planResults);
-        const tripPlanId = planResults.insertId; // 獲取新插入記錄的ID
-        const tripDate = planResults.insertDate;
-        const tripTitle = planResults.insertTitle;
-
-        // 準備並插入 trip_calendar 資料
-        const calendarDataWithPlanId = {
-            ...calendarData,
-            trip_plan_id: tripPlanId,
-        };
-        const sqlCalendar = 'INSERT INTO `trip_calendar` SET ?';
-        await connection.query(sqlCalendar, [calendarDataWithPlanId]);
-
-        // 提交connection
-        await connection.commit();
-
-        // 釋放連接回連接池
-        connection.release();
+            return plan;
+        });
 
         return {
             success: true,
-            tripPlanId,
-            tripDate,
-            tripTitle,
+            tripPlanId: result.trip_plan_id,
+            tripDate: result.trip_date,
+            tripTitle: result.trip_title,
             message: '行程計畫和行程日曆成功創建。',
         };
     } catch (error) {
-        // 如果出現錯誤，則 rollback
-        if (connection) {
-            await connection.rollback();
-            connection.release();
-        }
-        console.log(error);
+        console.error('Error creating trip plans and calendar:', error);
         return { success: false, error: '新增資料到資料庫時出錯' };
     }
 };

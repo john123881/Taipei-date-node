@@ -1,8 +1,18 @@
-import express from "express";
-import { trip } from "../apiConfig.js";
-import { getContentNight } from "../../services/index.js";
+import express from 'express';
+import { trip } from '../apiConfig.js';
+import { getContentNight } from '../../services/index.js';
 
 const router = express.Router();
-router.get(trip.getContentNight, getContentNight);
+
+router.get(trip.getContentNight, async (req, res) => {
+    try {
+        const { trip_plan_id } = req.params;
+        const results = await getContentNight(trip_plan_id);
+        res.json(results);
+    } catch (error) {
+        console.error('Error in getContentNight router:', error);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
 
 export default router;

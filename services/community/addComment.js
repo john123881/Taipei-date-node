@@ -1,9 +1,13 @@
-import db from '../../utils/mysql2-connect.js';
+import prisma from '../../utils/prisma-client.js';
 
 export const addComment = async (context, status, postId, userId) => {
-    const [results] = await db.query(
-        `INSERT INTO comm_comment(context, status, post_id, user_id) VALUES (?, ?, ?, ?)`,
-        [context, status, postId, userId]
-    );
+    const results = await prisma.comm_comment.create({
+        data: {
+            context,
+            status: Number(status),
+            post_id: Number(postId),
+            user_id: Number(userId),
+        },
+    });
     return results;
 };

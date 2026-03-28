@@ -1,4 +1,4 @@
-import db from '../../utils/mysql2-connect.js';
+import prisma from '../../utils/prisma-client.js';
 import dayjs from 'dayjs';
 
 export const createEvent = async (
@@ -12,58 +12,54 @@ export const createEvent = async (
     endDate,
     endTime
 ) => {
-    const [results] = await db.query(
-        `INSERT INTO comm_events(title ,description, status, location, user_id, start_date, start_time, end_date, end_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
+    const newEvent = await prisma.comm_events.create({
+        data: {
             title,
             description,
-            status,
+            status: Number(status),
             location,
-            userId,
-            startDate,
-            startTime,
-            endDate,
-            endTime,
-        ]
-    );
+            user_id: Number(userId),
+            start_date: new Date(startDate),
+            start_time: startTime, // Assuming string format works or handle appropriately
+            end_date: new Date(endDate),
+            end_time: endTime,
+        },
+    });
 
-    const newEventId = results.insertId;
+    const event = await prisma.comm_events.findUnique({
+        where: {
+            comm_event_id: newEvent.comm_event_id,
+        },
+        include: {
+            comm_events_photo: {
+                select: {
+                    photo_name: true,
+                    img: true,
+                },
+            },
+        },
+    });
 
-    const getNewEventQuery = `
-        SELECT 
-            ce.*, 
-            cep.photo_name, 
-            cep.img,
-            DATE_FORMAT(ce.start_time, '%H:%i') AS formatted_start_time,
-            DATE_FORMAT(ce.end_time, '%H:%i') AS formatted_end_time
-        FROM 
-            comm_events AS ce
-        LEFT JOIN 
-            comm_events_photo AS cep 
-        ON 
-            ce.comm_event_id = cep.comm_event_id
-        WHERE
-            ce.comm_event_id = ?
-        `;
+    if (event) {
+        const startDateFormat = 'YYYY[年] MM[月]DD[日]';
+        const endDateFormat = 'YYYY[年] MM[月]DD[日]';
 
-    const [eventResults] = await db.query(getNewEventQuery, [newEventId]);
-
-    const startDateFormat = 'YYYY[年] MM[月]DD[日]';
-    const endDateFormat = 'YYYY[年] MM[月]DD[日]';
-
-    if (eventResults.length > 0) {
-        const event = eventResults[0];
-
-        event.start_date = dayjs(event.start_date).format(startDateFormat);
-        event.end_date = dayjs(event.end_date).format(endDateFormat);
-
-        if (event.img) {
-            const imageBase64 = Buffer.from(event.img).toString('base64');
-            event.img = `data:image/jpeg;base64,${imageBase64}`;
+        const photo = event.comm_events_photo[0];
+        let imgBase64 = null;
+        if (photo && photo.img) {
+            imgBase64 = `data:image/jpeg;base64,${Buffer.from(photo.img).toString('base64')}`;
         }
 
-        return event;
+        return {
+            ...event,
+            start_date: dayjs(event.start_date).format(startDateFormat),
+            start_time: event.start_time ? dayjs(event.start_time).format('HH:mm') : null,
+            end_date: dayjs(event.end_date).format(endDateFormat),
+            end_time: event.end_time ? dayjs(event.end_time).format('HH:mm') : null,
+            photo_name: photo?.photo_name,
+            img: imgBase64,
+        };
     }
 
-    return results;
+    return newEvent;
 };

@@ -1,26 +1,33 @@
-import db from '../../utils/mysql2-connect.js';
+import prisma from '../../utils/prisma-client.js';
 
 export const getComments = async (postIds) => {
-    const placeholders = postIds.map(() => '?').join(', ');
+    const eIds = postIds.map((id) => Number(id));
 
-    const qeury = `
-    SELECT 
-        comment.comm_comment_id,
-        comment.context, 
-        comment.post_id, 
-        comment.user_id,
-        users.email,
-        users.username,
-        users.avatar
-    FROM 
-        comm_comment AS comment
-    LEFT JOIN 
-        member_user AS users 
-    ON 
-        comment.user_id = users.user_id
-    WHERE 
-        post_id IN (${placeholders});
-    `;
-    const [results] = await db.query(qeury, [...postIds]);
-    return results;
+    const results = await prisma.comm_comment.findMany({
+        where: {
+            post_id: { in: eIds },
+        },
+        include: {
+            member_user: {
+                select: {
+                    email: true,
+                    username: true,
+                    avatar: true,
+                },
+            },
+        },
+    });
+
+    // Transform to match original output structure if needed,
+    // though the include object is usually preferred in Prisma.
+    // For exact compatibility with existing frontend:
+    return results.map((c) => ({
+        comm_comment_id: c.comm_comment_id,
+        context: c.context,
+        post_id: c.post_id,
+        user_id: c.user_id,
+        email: c.member_user.email,
+        username: c.member_user.username,
+        avatar: c.member_user.avatar,
+    }));
 };

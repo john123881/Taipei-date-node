@@ -15,13 +15,23 @@ import {
 const movieListrouter = express.Router();
 
 movieListrouter.get(booking.getMovieList, async (_req, res) => {
-    const results = await getMovieList();
-    res.json(results);
+    try {
+        const results = await getMovieList();
+        res.json(results);
+    } catch (error) {
+        console.error('Error in getMovieList:', error);
+        res.status(500).json({ status: false, message: '獲取電影列表失敗' });
+    }
 });
 
 movieListrouter.get(booking.getIndexMovieList, async (_req, res) => {
-    const results = await getIndexMovieList();
-    res.json(results);
+    try {
+        const results = await getIndexMovieList();
+        res.json(results);
+    } catch (error) {
+        console.error('Error in getIndexMovieList:', error);
+        res.status(500).json({ status: false, message: '獲取首頁電影列表失敗' });
+    }
 });
 
 movieListrouter.post(booking.saveMovie, async (req, res) => {
@@ -52,8 +62,6 @@ movieListrouter.post(booking.saveMovie, async (req, res) => {
 });
 
 movieListrouter.delete(booking.unsaveMovie, async (req, res) => {
-    // authenticate : 授權後，!req.my_jwt?.id判斷有無授權成功
-
     const { movieId, userId } = req.body;
 
     if (!movieId || !userId) {
@@ -81,35 +89,50 @@ movieListrouter.delete(booking.unsaveMovie, async (req, res) => {
 });
 
 movieListrouter.get(booking.checkMovieStatus, async (req, res) => {
-    const { userId, movieIds } = req.query;
-    if (!userId || !movieIds) {
-        return res.status(400).json({
-            status: false,
-            message: '需要提供 userId 和 movieIds',
-        });
+    try {
+        const { userId, movieIds } = req.query;
+        if (!userId || !movieIds) {
+            return res.status(400).json({
+                status: false,
+                message: '需要提供 userId 和 movieIds',
+            });
+        }
+        const movieIdArray = movieIds.split(',').map((id) => id.trim());
+        const results = await checkMovieStatus(userId, movieIdArray);
+        res.json(results);
+    } catch (error) {
+        console.error('Error in checkMovieStatus:', error);
+        res.status(500).json({ status: false, message: '檢查電影狀態失敗' });
     }
-    const movieIdArray = movieIds.split(',').map((id) => parseInt(id.trim()));
-    const results = await checkMovieStatus(userId, movieIdArray);
-    res.json(results);
 });
 
 movieListrouter.get(booking.searchMovies, async (req, res) => {
-    const { searchTerm } = req.query;
+    try {
+        const { searchTerm } = req.query;
 
-    if (!searchTerm) {
-        return res.status(400).json({
-            status: false,
-            message: '需要提供 searchTerm',
-        });
+        if (!searchTerm) {
+            return res.status(400).json({
+                status: false,
+                message: '需要提供 searchTerm',
+            });
+        }
+
+        const results = await searchMovies(searchTerm);
+        res.json(results);
+    } catch (error) {
+        console.error('Error in searchMovies:', error);
+        res.status(500).json({ status: false, message: '搜尋電影失敗' });
     }
-
-    const results = await searchMovies(searchTerm);
-    res.json(results);
 });
 
 movieListrouter.get(booking.getBookingSystem, async (_req, res) => {
-    const results = await getBookingSystem();
-    res.json(results);
+    try {
+        const results = await getBookingSystem();
+        res.json(results);
+    } catch (error) {
+        console.error('Error in getBookingSystem:', error);
+        res.status(500).json({ status: false, message: '獲取訂票系統資料失敗' });
+    }
 });
 
 movieListrouter.delete(booking.deleteMovieBooking, async (req, res) => {
@@ -140,9 +163,14 @@ movieListrouter.delete(booking.deleteMovieBooking, async (req, res) => {
 });
 
 movieListrouter.get(booking.getMovieDetail, async (req, res) => {
-    const { movieId } = req.params;
-    const results = await getMovieDetail(movieId);
-    res.json(results);
+    try {
+        const { movieId } = req.params;
+        const results = await getMovieDetail(movieId);
+        res.json(results);
+    } catch (error) {
+        console.error('Error in getMovieDetail:', error);
+        res.status(500).json({ status: false, message: '獲取電影詳情失敗' });
+    }
 });
 
 export default movieListrouter;

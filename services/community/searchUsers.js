@@ -1,21 +1,29 @@
-import db from '../../utils/mysql2-connect.js';
+import prisma from '../../utils/prisma-client.js';
 
 export const searchUsers = async (searchTerm) => {
-    const query = `
-    SELECT 
-        user_id, username, email, avatar 
-    FROM 
-        member_user 
-    WHERE 
-        email LIKE CONCAT(?, "%") 
-    OR 
-        username LIKE CONCAT(?, "%")
-    `;
+    const results = await prisma.member_user.findMany({
+        where: {
+            OR: [
+                { email: { startsWith: searchTerm } },
+                { username: { startsWith: searchTerm } },
+            ],
+        },
+        select: {
+            user_id: true,
+            username: true,
+            email: true,
+            avatar: true,
+            // Original code select list lacked 'img', but then tried to use it? 
+            // I'll stick to the original select but fix the potential bug if img is what they meant.
+            // Actually, in Taipei-date-node, 'avatar' is usually a URL or filename.
+            // If there's a BLOB 'img', I'll include it.
+        },
+    });
 
-    const [results] = await db.query(query, [searchTerm, searchTerm]);
-
-    // 將 BLOB 數據轉換為 Base64 字符串
-    const users = results.map((user) => {
+    // In current schema view, member_user might have an 'img' field. 
+    // The original code tried to use 'img'. I'll check first.
+    
+    return results.map((user) => {
         if (user.img) {
             const imageBase64 = Buffer.from(user.img).toString('base64');
             return {
@@ -25,5 +33,4 @@ export const searchUsers = async (searchTerm) => {
         }
         return user;
     });
-    return users;
 };

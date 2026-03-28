@@ -43,3 +43,4 @@ export * from './checkBarStatus.js';
 export * from './searchBars.js';
 
 export * from './deleteBarBooking.js';
+export * from './getFilteredBarList.js';

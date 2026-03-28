@@ -1,34 +1,36 @@
-import db from "../../utils/mysql2-connect.js";
+import prisma from '../../utils/prisma-client.js';
 
 //新增單筆資料
 export const createBarRating = async (bar_id, bar_rating_star, user_id) => {
     // 將評分數據插入到數據庫中
-    const [insertResult] = await db.query(
-        `INSERT INTO bar_rating(bar_id, bar_rating_star, user_id) VALUES (?, ?, ?)`,
-        [bar_id, bar_rating_star, user_id]
-    );
+    const newRating = await prisma.bar_rating.create({
+        data: {
+            bar_id: Number(bar_id),
+            bar_rating_star: Number(bar_rating_star),
+            user_id: Number(user_id),
+        },
+        include: {
+            bars: {
+                select: {
+                    bar_id: true,
+                    bar_name: true,
+                },
+            },
+            member_user: {
+                select: {
+                    user_id: true,
+                    username: true,
+                },
+            },
+        },
+    });
 
-    // 獲取新插入的評分數據的 ID
-    const newRatingId = insertResult.insertId;
-
-    // 查詢新插入的評分數據
-    const getNewRatingQuery = `
-        SELECT 
-            bar_rating.*,
-            bars.bar_id,
-            bars.bar_name,
-            member_user.user_id,
-            member_user.username
-        FROM 
-            bar_rating
-        LEFT JOIN 
-            bars ON bar_rating.bar_id = bars.bar_id
-        LEFT JOIN 
-            member_user ON bar_rating.user_id = member_user.user_id
-        WHERE
-            bar_rating.bar_id = ?`;
-
-    const [ratingResults] = await db.query(getNewRatingQuery, [newRatingId]);
-
-    return ratingResults;
+    // 為了保持兼容性，返回一個數組（原代碼返回評分結果數組）
+    return [
+        {
+            ...newRating,
+            bar_name: newRating.bars?.bar_name,
+            username: newRating.member_user?.username,
+        },
+    ];
 };

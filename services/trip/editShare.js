@@ -1,21 +1,18 @@
-import db from "../../utils/mysql2-connect.js";
+import prisma from '../../utils/prisma-client.js';
+
 // 分享行程
-
-export const editShare = async (req, res) => {
-  const { trip_plan_id } = req.params;
-
-  try {
-    const [results] = await db.query(
-      "UPDATE `trip_plans` SET trip_draft = 1 WHERE `trip_plan_id`=?",
-      [trip_plan_id]
-    );
-    if (results.affectedRows > 0) {
-      res.send("Trip plan successfully updated.");
-    } else {
-      res.status(404).send("No trip plan found with the given ID");
+export const editShare = async (trip_plan_id) => {
+    try {
+        return await prisma.trip_plans.update({
+            where: {
+                trip_plan_id: Number(trip_plan_id),
+            },
+            data: {
+                trip_draft: true, // 1 in original SQL
+            },
+        });
+    } catch (error) {
+        console.error('Error sharing trip plan:', error);
+        throw error;
     }
-  } catch (error) {
-    console.error("Error updating data in the database:", error);
-    res.status(500).send("Error updating data in the database");
-  }
 };

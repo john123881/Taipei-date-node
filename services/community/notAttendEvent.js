@@ -1,7 +1,11 @@
-import db from '../../utils/mysql2-connect.js';
+import prisma from '../../utils/prisma-client.js';
 
 export const notAttendEvent = async (eventId, userId) => {
-    const query = `DELETE FROM comm_participants WHERE comm_event_id = ? AND user_id = ?`;
-    const [results] = await db.query(query, [eventId, userId]);
+    const results = await prisma.comm_participants.deleteMany({
+        where: {
+            comm_event_id: Number(eventId),
+            user_id: Number(userId),
+        },
+    });
     return results;
 };

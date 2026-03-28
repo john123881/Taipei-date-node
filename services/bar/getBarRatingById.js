@@ -1,23 +1,33 @@
-import db from '../../utils/mysql2-connect.js';
+import prisma from '../../utils/prisma-client.js';
 
 export const getBarRatingById = async (bar_id) => {
-    const sql = `
-    SELECT 
-        bar_rating.*,
-        bars.bar_name,
-        bars.bar_id,
-        member_user.user_id,
-        member_user.username,
-        member_user.avatar
-    FROM 
-        bar_rating
-    LEFT JOIN 
-        bars ON bar_rating.bar_id = bars.bar_id
-    LEFT JOIN 
-        member_user ON bar_rating.user_id = member_user.user_id
-    WHERE 
-        bar_rating.bar_id = ?;
-  `;
-    const [results] = await db.query(sql, [bar_id]);
-    return results;
+    const results = await prisma.bar_rating.findMany({
+        where: {
+            bar_id: Number(bar_id),
+        },
+        include: {
+            bars: {
+                select: {
+                    bar_id: true,
+                    bar_name: true,
+                },
+            },
+            member_user: {
+                select: {
+                    user_id: true,
+                    username: true,
+                    avatar: true,
+                },
+            },
+        },
+    });
+
+    return results.map((rating) => ({
+        ...rating,
+        bar_name: rating.bars?.bar_name,
+        bar_id: rating.bars?.bar_id,
+        user_id: rating.member_user?.user_id,
+        username: rating.member_user?.username,
+        avatar: rating.member_user?.avatar,
+    }));
 };

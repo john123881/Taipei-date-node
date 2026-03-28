@@ -1,11 +1,14 @@
-import db from '../../utils/mysql2-connect.js';
+import prisma from '../../utils/prisma-client.js';
 
 export const markNotiAsRead = async (notiId, userId) => {
-    const query = `
-        UPDATE comm_noti
-        SET is_read = 1
-        WHERE comm_noti_id = ? AND receiver_id = ?
-    `;
-    const [results] = await db.query(query, [notiId, userId]);
+    const results = await prisma.comm_noti.updateMany({
+        where: {
+            comm_noti_id: Number(notiId),
+            receiver_id: Number(userId),
+        },
+        data: {
+            is_read: 1,
+        },
+    });
     return results;
 };

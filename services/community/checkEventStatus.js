@@ -1,24 +1,21 @@
-import db from '../../utils/mysql2-connect.js';
+import prisma from '../../utils/prisma-client.js';
 
 export const checkEventStatus = async (userId, eventIds) => {
-    const placeholders = eventIds.map(() => '?').join(', ');
-    const query = `
-    SELECT
-        e.comm_event_id,
-    EXISTS (
-        SELECT 1
-        FROM comm_participants
-        WHERE comm_participants.comm_event_id  = e.comm_event_id  AND user_id = ?
-    ) AS isAttended
-    FROM
-        comm_events AS e
-    WHERE
-        e.comm_event_id IN (${placeholders});
-    `;
-    const [results] = await db.query(query, [userId, ...eventIds]);
-    // 返回一個布林值表示是否已收藏, 如果已收藏(===1)回傳 true
-    return results.map((row) => ({
-        eventId: row.comm_event_id,
-        isAttended: row.isAttended === 1,
+    const uId = Number(userId);
+    const eIds = eventIds.map(id => Number(id));
+
+    const attended = await prisma.comm_participants.findMany({
+        where: {
+            user_id: uId,
+            comm_event_id: { in: eIds },
+        },
+        select: { comm_event_id: true },
+    });
+
+    const attendedSet = new Set(attended.map(a => a.comm_event_id));
+
+    return eIds.map(eventId => ({
+        eventId,
+        isAttended: attendedSet.has(eventId),
     }));
 };

@@ -1,20 +1,21 @@
-import db from '../../utils/mysql2-connect.js';
+import prisma from '../../utils/prisma-client.js';
 
 export const getFollowings = async (followerId) => {
-    const query = `
-        SELECT
-            u.user_id,
-            u.username,
-            u.email,
-            u.avatar
-        FROM
-            comm_follows AS f
-        JOIN
-            member_user AS u ON u.user_id = f.following_id
-        WHERE
-            f.follower_id = ?;
-    `;
+    const results = await prisma.comm_follows.findMany({
+        where: {
+            follower_id: Number(followerId),
+        },
+        include: {
+            following: {
+                select: {
+                    user_id: true,
+                    username: true,
+                    email: true,
+                    avatar: true,
+                },
+            },
+        },
+    });
 
-    const [results] = await db.query(query, [followerId]);
-    return results;
+    return results.map((f) => f.following);
 };
