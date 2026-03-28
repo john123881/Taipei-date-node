@@ -1,6 +1,6 @@
 import { Server } from 'socket.io';
 import express from 'express';
-import db from './utils/mysql2-connect.js';
+import prisma from './utils/prisma-client.js';
 import authenticate from './middlewares/authenticate.js';
 import cors from 'cors';
 
@@ -50,26 +50,20 @@ io.on('connection', (socket) => {
             avatar,
         } = data;
 
-        // 將通知存儲到數據庫
+        // 將通知存儲到數據庫 (使用 Prisma)
         try {
-            const query = `
-                    INSERT INTO 
-                        comm_noti (sender_id, receiver_id, type, message, post_id, is_read)
-                    VALUES (?, ?, ?, ?, ?, 0)
-                `;
-            const [results] = await db.query(query, [
-                senderId,
-                receiverId,
-                type,
-                message,
-                postId,
-            ]);
+            const newNoti = await prisma.comm_noti.create({
+                data: {
+                    sender_id: senderId,
+                    receiver_id: receiverId,
+                    type: type,
+                    message: message,
+                    post_id: postId || null,
+                    is_read: false,
+                }
+            });
 
-            const notiId = results.insertId;
-
-            // console.log(notiId);
-
-            // console.log('Notification saved to database');
+            const notiId = newNoti.comm_noti_id;
 
             // 向發送者回應通知已成功保存
             socket.emit('notificationSaved', {
@@ -92,13 +86,6 @@ io.on('connection', (socket) => {
                     message,
                     avatar,
                 });
-                /*
-                console.log(
-                    `Notification sent from ${senderName} to ${receiverName}: ${type}`
-                );
-                */
-            } else {
-                // console.log(`Receiver ${receiverName} not found.`);
             }
         } catch (error) {
             console.error('Failed to save notification:', error);
@@ -116,18 +103,15 @@ io.on('connection', (socket) => {
         const { senderId, receiverId, postId, type } = data;
 
         try {
-            const query = `
-                DELETE FROM
-                    comm_noti
-                WHERE
-                    sender_id = ? AND receiver_id = ? AND post_id = ? AND type = ?
-            `;
-            const [results] = await db.query(query, [
-                senderId,
-                receiverId,
-                postId,
-                type,
-            ]);
+            // 使用 Prisma 刪除通知
+            await prisma.comm_noti.deleteMany({
+                where: {
+                    sender_id: senderId,
+                    receiver_id: receiverId,
+                    post_id: postId,
+                    type: type,
+                }
+            });
 
             console.log('Notification removed from database');
 
@@ -150,17 +134,14 @@ io.on('connection', (socket) => {
         const { senderId, receiverId, type } = data;
 
         try {
-            const query = `
-                DELETE FROM
-                    comm_noti
-                WHERE
-                    sender_id = ? AND receiver_id = ? AND type = ?
-            `;
-            const [results] = await db.query(query, [
-                senderId,
-                receiverId,
-                type,
-            ]);
+            // 使用 Prisma 刪除追蹤通知
+            await prisma.comm_noti.deleteMany({
+                where: {
+                    sender_id: senderId,
+                    receiver_id: receiverId,
+                    type: type,
+                }
+            });
 
             console.log('Notification removed from database');
 

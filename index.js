@@ -3,25 +3,19 @@ import 'dotenv/config.js';
 
 // 引入 express
 import express from 'express';
-import session from 'express-session';
-import mysqlSession from 'express-mysql-session';
-import db from './utils/mysql2-connect.js';
-import cors from 'cors';
-import dotenv from 'dotenv';
 import http from 'http';
 import cookieParser from 'cookie-parser';
+import dotenv from 'dotenv';
+
+// 引入自定義配置與中介軟體
+import corsMiddleware from './config/cors-config.js';
+import sessionMiddleware from './config/session-config.js';
+import globalLocals from './middlewares/global-locals.js';
+import { notFoundHandler, globalErrorHandler } from './middlewares/error-handler.js';
 import { initSocket } from './utils/socket-handler.js';
-import { isOriginAllowed } from './utils/cors-config.js';
 
-// 指定要加載的 dotenv 檔案名稱
-dotenv.config(); // 預設就會讀取同目錄下的 .env
-import { sendError } from './utils/response-handler.js';
-
-// 中介軟體
-// 已移至各路由中使用
-
+// 路由
 import {
-
     communityRouter,
     tripRouter,
     barRouter,
@@ -31,58 +25,26 @@ import {
     authRouter,
 } from './routes/index.js';
 
-const MysqlStore = mysqlSession(session);
-const sessionStore = new MysqlStore({}, db);
+// 初始化環境變數
+dotenv.config();
 
 const app = express();
 
-//top-level middleWare
+// 設定模板引擎
+app.set('view engine', 'ejs');
+
+// --- Top-level Middlewares ---
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cookieParser());
+app.use(corsMiddleware);    // CORS 配置
+app.use(sessionMiddleware); // Session 配置
+app.use(globalLocals);      // 全域 res.locals 設定
 
-const allowedOrigins = [
-    'https://taipei-date.vercel.app',
-    'http://localhost:3000',
-    'http://localhost:3002',
-];
+// --- 靜態內容 ---
+app.use('/', express.static('public'));
 
-const corsOption = {
-    credentials: true,
-    origin: (origin, callback) => {
-        if (isOriginAllowed(origin)) {
-            callback(null, true);
-        } else {
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
-};
-app.use(cors(corsOption));
-
-app.use((req, res, next) => {
-    res.locals.title = 'Taipei Date的網站';
-    res.locals.pageName = '';
-    res.locals.session = req.session;
-    res.locals.originalUrl = req.originalUrl;
-    next();
-});
-
-app.set('view engine', 'ejs');
-
-app.use(
-    session({
-        saveUninitialized: true,
-        resave: true,
-        secret: process.env.SESSION_SECRET,
-        store: sessionStore,
-        cookie: {
-            httpOnly: true,
-            secure: true, // Render 是 HTTPS
-            sameSite: 'none', // 跨網域必備
-        },
-    })
-);
-
+// --- 路由掛載 ---
 
 // 首頁
 app.get('/', (req, res) => {
@@ -102,10 +64,7 @@ app.use('/date', dateRouter);
 app.use('/bar', barRouter);
 app.use('/booking', bookingRouter);
 
-// 靜態內容
-app.use('/', express.static('public'));
-
-// server 偵聽
+// --- 伺服器啟動 ---
 const port = process.env.PORT || 3002;
 const server = http.createServer(app);
 
@@ -117,29 +76,7 @@ server.listen(port, '0.0.0.0', () => {
     console.log(`[${mode.toUpperCase()}] Server Started at http://localhost:${port}`);
 });
 
-
-/* 404 頁面 */
-app.use((req, res) => {
-    res.status(404).render('404');
-});
-
-/**
- * 全域錯誤處理中介軟體 (Global Error Handler)
- * 接收 catchAsync 丟出的錯誤並統一回傳。
- */
-app.use((err, req, res, next) => {
-    console.error('[Global Error Handler]:', err);
-    
-    // 如果是 zod 驗證錯誤，可以特別處理 (選填)
-    if (err.name === 'ZodError') {
-        return sendError(res, '資料格式驗證失敗', 400, err.errors);
-    }
-    
-    sendError(
-        res, 
-        err.message || '伺服器發生未預期的錯誤', 
-        err.statusCode || 500, 
-        err
-    );
-});
+// --- 錯誤處理 (必須放在所有路由之後) ---
+app.use(notFoundHandler);    // 404
+app.use(globalErrorHandler); // 全域錯誤處理
 

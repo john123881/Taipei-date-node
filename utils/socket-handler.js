@@ -1,6 +1,6 @@
 import { Server } from 'socket.io';
 import jsonwebtoken from 'jsonwebtoken';
-import db from './mysql2-connect.js';
+import prisma from './prisma-client.js';
 import cookie from 'cookie';
 import { isOriginAllowed } from './cors-config.js';
 
@@ -116,21 +116,19 @@ export const initSocket = (server) => {
             } = data;
 
             try {
-                // 將通知存入資料庫
-                const query = `
-                    INSERT INTO 
-                        comm_noti (sender_id, receiver_id, type, message, post_id, is_read)
-                    VALUES (?, ?, ?, ?, ?, 0)
-                `;
-                const [results] = await db.query(query, [
-                    senderId,
-                    receiverId,
-                    type,
-                    message,
-                    postId,
-                ]);
+                // 將通知存入資料庫 (使用 Prisma)
+                const newNoti = await prisma.comm_noti.create({
+                    data: {
+                        sender_id: senderId,
+                        receiver_id: receiverId,
+                        type: type,
+                        message: message,
+                        post_id: postId || null,
+                        is_read: false,
+                    }
+                });
 
-                const notiId = results.insertId;
+                const notiId = newNoti.comm_noti_id;
 
                 // 回應發送者
                 socket.emit('notificationSaved', {
@@ -166,11 +164,15 @@ export const initSocket = (server) => {
         socket.on('removeNotification', async (data) => {
             const { senderId, receiverId, postId, type } = data;
             try {
-                const query = `
-                    DELETE FROM comm_noti
-                    WHERE sender_id = ? AND receiver_id = ? AND post_id = ? AND type = ?
-                `;
-                await db.query(query, [senderId, receiverId, postId, type]);
+                // 使用 Prisma 刪除通知
+                await prisma.comm_noti.deleteMany({
+                    where: {
+                        sender_id: senderId,
+                        receiver_id: receiverId,
+                        post_id: postId,
+                        type: type,
+                    }
+                });
                 socket.emit('notificationRemoved', { status: true, message: '通知已移除' });
             } catch (error) {
                 console.error('Failed to remove notification:', error);
@@ -180,11 +182,14 @@ export const initSocket = (server) => {
         socket.on('removeFollowNotification', async (data) => {
             const { senderId, receiverId, type } = data;
             try {
-                const query = `
-                    DELETE FROM comm_noti
-                    WHERE sender_id = ? AND receiver_id = ? AND type = ?
-                `;
-                await db.query(query, [senderId, receiverId, type]);
+                // 使用 Prisma 刪除追蹤通知
+                await prisma.comm_noti.deleteMany({
+                    where: {
+                        sender_id: senderId,
+                        receiver_id: receiverId,
+                        type: type,
+                    }
+                });
                 socket.emit('notificationRemoved', { status: true, message: '通知已移除' });
             } catch (error) {
                 console.error('Failed to remove follow notification:', error);
