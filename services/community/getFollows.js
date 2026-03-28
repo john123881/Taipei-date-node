@@ -1,4 +1,3 @@
-```javascript
 import prisma from '../../utils/prisma-client.js';
 
 export const getFollows = async (followingId, followerId) => {
@@ -19,4 +18,3 @@ export const getFollows = async (followingId, followerId) => {
         { relation_type: 'following', count: followingCount },
     ];
 };
-```

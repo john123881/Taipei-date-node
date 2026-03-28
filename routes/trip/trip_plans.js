@@ -61,8 +61,8 @@ router.post(trip.createPlansAndCalendar, authenticate, async (req, res) => {
 
     const results = await createPlansAndCalendar(
         req.my_jwt.id,
-        planData,
-        calendarData
+        req.body.tripPlan, // Extract the nested plan data
+        req.body.calendarData || {} // Provide an empty object if no calendar data exists
     );
     console.log('Results from service:', results);
 

@@ -2,7 +2,7 @@ import prisma from '../../utils/prisma-client.js';
 
 export const createPlansAndCalendar = async (
     user_id,
-    planData,
+    planData = {},
     calendarData = {}
 ) => {
     try {
@@ -12,8 +12,8 @@ export const createPlansAndCalendar = async (
                 data: {
                     ...planData,
                     user_id: Number(user_id),
-                    // 確保 trip_draft 是布林值
-                    trip_draft: Boolean(planData.trip_draft),
+                    // 確保 trip_draft 是布林值，如果沒有傳則使用模型預設值 (undefined)
+                    trip_draft: planData.trip_draft !== undefined ? Boolean(planData.trip_draft) : undefined,
                     // 如果有日期字串，轉換為 Date 對象
                     trip_date: planData.trip_date
                         ? new Date(planData.trip_date)
