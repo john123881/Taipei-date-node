@@ -1,14 +1,23 @@
 import { Server } from 'socket.io';
 import jsonwebtoken from 'jsonwebtoken';
 import db from './mysql2-connect.js';
+import cookie from 'cookie';
+import { isOriginAllowed } from './cors-config.js';
 
 let onlineUsers = []; // [{ username, userId, socketId }]
 
 export const initSocket = (server) => {
     const io = new Server(server, {
         cors: {
-            origin: process.env.CORS_ORIGIN || '*', // 建議在 .env 設定您的前端網址
+            origin: (origin, callback) => {
+                if (isOriginAllowed(origin)) {
+                    callback(null, true);
+                } else {
+                    callback(new Error('Not allowed by CORS'));
+                }
+            },
             methods: ['GET', 'POST'],
+            credentials: true,
         },
     });
 
@@ -33,7 +42,15 @@ export const initSocket = (server) => {
     };
 
     io.use((socket, next) => {
-        const token = socket.handshake.auth?.headers?.Authorization || socket.handshake.auth?.token;
+        // 從 Cookie 讀取
+        const cookies = cookie.parse(socket.handshake.headers.cookie || '');
+        let token = cookies.token;
+
+        // 向下相容
+        if (!token) {
+            token = socket.handshake.auth?.headers?.Authorization || socket.handshake.auth?.token;
+        }
+
         if (!token) {
             return next(new Error('Missing token'));
         }

@@ -9,7 +9,9 @@ import db from './utils/mysql2-connect.js';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import http from 'http';
+import cookieParser from 'cookie-parser';
 import { initSocket } from './utils/socket-handler.js';
+import { isOriginAllowed } from './utils/cors-config.js';
 
 // 指定要加載的 dotenv 檔案名稱
 dotenv.config(); // 預設就會讀取同目錄下的 .env
@@ -36,10 +38,23 @@ const app = express();
 //top-level middleWare
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+app.use(cookieParser());
+
+const allowedOrigins = [
+    'https://taipei-date.vercel.app',
+    'http://localhost:3000',
+    'http://localhost:3002',
+];
 
 const corsOption = {
     credentials: true,
-    origin: process.env.CORS_ORIGIN || true, // 如果沒設就不限制（開發用），有設就限制（生產用）
+    origin: (origin, callback) => {
+        if (isOriginAllowed(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
 };
 app.use(cors(corsOption));
 

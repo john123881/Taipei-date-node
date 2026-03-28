@@ -48,7 +48,21 @@ authRouter.post('/login', async (req, res) => {
 
     try {
         const result = await loginUser(email, password);
-        res.json(result);
+        if (result.success && result.data.token) {
+            // 設定 httpOnly Cookie
+            res.cookie('token', result.data.token, {
+                httpOnly: true,
+                secure: true, // Render 使用的是 HTTPS
+                sameSite: 'None', // 跨網域連線必備
+                maxAge: 3 * 24 * 60 * 60 * 1000, // 3天，與 JWT 過期時間一致
+            });
+            
+            // 為了不影響前端結構，暫時保留 data.token 回傳，但前端應改為不再使用它
+            // 或是您可以選擇移除它，強迫前端改用 Cookie
+            res.json(result);
+        } else {
+            res.json(result);
+        }
     } catch (error) {
         console.error('Login Error details:', error); // Log full error details
         res.status(500).json({ success: false, error: '伺服器錯誤', details: error.message });
@@ -180,6 +194,14 @@ authRouter.put('/forget-password-edit', async (req, res) => {
 authRouter.post('/google-login', async (req, res) => {
     try {
         const result = await googleLogin(req.body);
+        if (result.success && result.data.token) {
+            res.cookie('token', result.data.token, {
+                httpOnly: true,
+                secure: true,
+                sameSite: 'None',
+                maxAge: 3 * 24 * 60 * 60 * 1000,
+            });
+        }
         res.json(result);
     } catch (error) {
         console.error('Google Login Error:', error);
@@ -188,3 +210,12 @@ authRouter.post('/google-login', async (req, res) => {
 });
 
 export default authRouter;
+// 登出
+authRouter.post('/logout', (req, res) => {
+    res.clearCookie('token', {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'None',
+    });
+    res.json({ success: true, message: '已成功登出' });
+});
