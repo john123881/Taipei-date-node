@@ -2,38 +2,27 @@ import express from 'express';
 import { account } from '../apiConfig.js';
 import uploadAws from '../../utils/upload-aws-imgs.js';
 import { uploadAvatar } from '../../services/index.js';
+import { sendSuccess, sendError } from '../../utils/response-handler.js';
 
 const uploadAvatarRouter = express.Router();
 
 uploadAvatarRouter.post(account.uploadAvatar, uploadAws.single('avatar'), async (req, res) => {
-    let output = {
-        success: false,
-        msg: '',
-        error: '',
-    };
     try {
         if (!req.file) {
-            output.msg = '請選擇檔案';
-            return res.json(output);
+            return sendError(res, '請選擇檔案', 400);
         }
 
         const sid = +req.params.sid || 0;
         const result = await uploadAvatar(sid, req.file.location);
 
         if (result) {
-            output.success = true;
-            output.msg = '上傳成功';
-            output.location = req.file.location;
+            sendSuccess(res, { location: req.file.location }, '上傳成功');
         } else {
-            output.msg = '上傳失敗';
+            sendError(res, '上傳失敗', 400);
         }
-
     } catch (error) {
-        console.error('Upload Avatar Error:', error);
-        output.msg = '伺服器錯誤';
-        output.error = error.message;
+        sendError(res, '伺服器錯誤', 500, error);
     }
-    res.json(output);
 });
 
 export default uploadAvatarRouter;

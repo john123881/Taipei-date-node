@@ -1,16 +1,16 @@
 import express from 'express';
 import { bar } from '../apiConfig.js';
 import { getBarList, getBarListId, getFilteredBarList } from '../../services/index.js';
+import { sendSuccess, sendError } from '../../utils/response-handler.js';
 
 const barListRouter = express.Router();
 
 barListRouter.get(bar.getBarList, async (_req, res) => {
     try {
         const results = await getBarList();
-        res.json(results);
+        sendSuccess(res, results);
     } catch (error) {
-        console.error('getBarList error:', error);
-        res.status(500).json({ status: false, message: '伺服器錯誤', error: error.message });
+        sendError(res, '伺服器錯誤', 500, error);
     }
 });
 
@@ -18,10 +18,9 @@ barListRouter.get('/bar/bar-list', async (req, res) => {
     try {
         const { bar_area_id, bar_type_id } = req.query;
         const results = await getFilteredBarList({ bar_area_id, bar_type_id });
-        res.json(results);
+        sendSuccess(res, results);
     } catch (error) {
-        console.error('getFilteredBarList error:', error);
-        res.status(500).json({ status: false, message: '伺服器錯誤', error: error.message });
+        sendError(res, '伺服器錯誤', 500, error);
     }
 });
 
@@ -29,10 +28,9 @@ barListRouter.get(bar.getBarListId, async (req, res) => {
     try {
         const { bar_id } = req.params;
         const results = await getBarListId(bar_id);
-        res.json(results);
+        sendSuccess(res, results);
     } catch (error) {
-        console.error('getBarListId error:', error);
-        res.status(500).json({ status: false, message: '伺服器錯誤', error: error.message });
+        sendError(res, '伺服器錯誤', 500, error);
     }
 });
 

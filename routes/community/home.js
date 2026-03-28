@@ -16,6 +16,7 @@ import {
     markNotiAsRead,
 } from '../../services/index.js';
 import authenticate from '../../middlewares/authenticate.js';
+import { sendSuccess, sendError } from '../../utils/response-handler.js';
 
 const router = express.Router();
 
@@ -26,17 +27,13 @@ router.get(community.getPostsByKeyword, async (req, res) => {
         const limit = parseInt(req.query.limit) || 12;
 
         if (!keyword) {
-            return res.status(400).json({
-                status: false,
-                message: '需要提供 keyword',
-            });
+            return sendError(res, '需要提供 keyword', 400);
         }
 
         const results = await getPostsByKeyword(keyword, page, limit);
-        res.json(results);
+        sendSuccess(res, results);
     } catch (error) {
-        console.error('getPostsByKeyword error:', error);
-        res.status(500).json({ status: false, message: '伺服器錯誤', error: error.message });
+        sendError(res, '伺服器錯誤', 500, error);
     }
 });
 
@@ -45,10 +42,9 @@ router.get(community.getPosts, async (req, res) => {
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 12;
         const results = await getPosts(page, limit);
-        res.json(results);
+        sendSuccess(res, results);
     } catch (error) {
-        console.error('getPosts error:', error);
-        res.status(500).json({ status: false, message: '伺服器錯誤', error: error.message });
+        sendError(res, '伺服器錯誤', 500, error);
     }
 });
 
@@ -56,49 +52,37 @@ router.get(community.getComments, async (req, res) => {
     try {
         const { postIds } = req.query;
         if (!postIds) {
-            return res.status(400).json({
-                status: false,
-                message: '需要提供 postIds',
-            });
+            return sendError(res, '需要提供 postIds', 400);
         }
         const postIdArray = postIds.split(',').map((id) => parseInt(id.trim()));
         const results = await getComments(postIdArray);
-        res.json(results);
+        sendSuccess(res, results);
     } catch (error) {
-        console.error('getComments error:', error);
-        res.status(500).json({ status: false, message: '伺服器錯誤', error: error.message });
+        sendError(res, '伺服器錯誤', 500, error);
     }
 });
 
 router.get(community.getSuggestUsers, async (req, res) => {
-    const results = await getSuggestUsers();
-    res.json(results);
+    try {
+        const results = await getSuggestUsers();
+        sendSuccess(res, results);
+    } catch (error) {
+        sendError(res, '伺服器錯誤', 500, error);
+    }
 });
 
 router.post(community.savePost, authenticate, async (req, res) => {
     const { postId, userId } = req.body;
 
     if (!postId || !userId) {
-        return res.status(400).json({
-            status: false,
-            message: '必須提供貼文ID和用戶ID',
-        });
+        return sendError(res, '必須提供貼文ID和用戶ID', 400);
     }
 
     try {
         const results = await savePost(postId, userId);
-        return res.status(201).json({
-            status: true,
-            message: '收藏貼文成功',
-            data: results,
-        });
+        sendSuccess(res, results, '收藏貼文成功');
     } catch (err) {
-        console.error('savePost error:', err);
-        res.status(500).json({
-            status: false,
-            message: '收藏貼文失敗',
-            error: err.message,
-        });
+        sendError(res, '收藏貼文失敗', 500, err);
     }
 });
 
@@ -106,26 +90,14 @@ router.delete(community.unsavePost, authenticate, async (req, res) => {
     const { postId, userId } = req.body;
 
     if (!postId || !userId) {
-        return res.status(400).json({
-            status: false,
-            message: '必須提供貼文ID和用戶ID',
-        });
+        return sendError(res, '必須提供貼文ID和用戶ID', 400);
     }
 
     try {
         const results = await unsavePost(postId, userId);
-        return res.status(200).json({
-            status: true,
-            message: '移除收藏貼文成功',
-            data: results,
-        });
+        sendSuccess(res, results, '移除收藏貼文成功');
     } catch (err) {
-        console.error('unsavePost error:', err);
-        res.status(500).json({
-            status: false,
-            message: '移除收藏貼文失敗',
-            error: err.message,
-        });
+        sendError(res, '移除收藏貼文失敗', 500, err);
     }
 });
 
@@ -133,26 +105,14 @@ router.post(community.likePost, authenticate, async (req, res) => {
     const { postId, userId } = req.body;
 
     if (!postId || !userId) {
-        return res.status(400).json({
-            status: false,
-            message: '必須提供貼文ID和用戶ID',
-        });
+        return sendError(res, '必須提供貼文ID和用戶ID', 400);
     }
 
     try {
         const results = await likePost(postId, userId);
-        return res.status(201).json({
-            status: true,
-            message: '喜愛貼文成功',
-            data: results,
-        });
+        sendSuccess(res, results, '喜愛貼文成功');
     } catch (err) {
-        console.error('likePost error:', err);
-        res.status(500).json({
-            status: false,
-            message: '喜愛貼文失敗',
-            error: err.message,
-        });
+        sendError(res, '喜愛貼文失敗', 500, err);
     }
 });
 
@@ -160,26 +120,14 @@ router.delete(community.unlikePost, authenticate, async (req, res) => {
     const { postId, userId } = req.body;
 
     if (!postId || !userId) {
-        return res.status(400).json({
-            status: false,
-            message: '必須提供貼文ID和用戶ID',
-        });
+        return sendError(res, '必須提供貼文ID和用戶ID', 400);
     }
 
     try {
         const results = await unlikePost(postId, userId);
-        return res.status(200).json({
-            status: true,
-            message: '移除喜愛貼文成功',
-            data: results,
-        });
+        sendSuccess(res, results, '移除喜愛貼文成功');
     } catch (err) {
-        console.error('unlikePost error:', err);
-        res.status(500).json({
-            status: false,
-            message: '移除喜愛貼文失敗',
-            error: err.message,
-        });
+        sendError(res, '移除喜愛貼文失敗', 500, err);
     }
 });
 
@@ -187,42 +135,26 @@ router.get(community.checkPostStatus, async (req, res) => {
     try {
         const { userId, postIds } = req.query;
         if (!userId || !postIds) {
-            return res.status(400).json({
-                status: false,
-                message: '需要提供 userId 和 postIds',
-            });
+            return sendError(res, '需要提供 userId 和 postIds', 400);
         }
         const postIdArray = postIds.split(',').map((id) => parseInt(id.trim()));
         const results = await checkPostStatus(userId, postIdArray);
-        res.json(results);
+        sendSuccess(res, results);
     } catch (error) {
-        console.error('checkPostStatus error:', error);
-        res.status(500).json({ status: false, message: '伺服器錯誤', error: error.message });
+        sendError(res, '伺服器錯誤', 500, error);
     }
 });
 
 router.delete(community.deletePost, authenticate, async (req, res) => {
     const { postId } = req.body;
     if (!postId) {
-        return res.status(400).json({
-            status: false,
-            message: '需要提供postId',
-        });
+        return sendError(res, '需要提供postId', 400);
     }
     try {
         const results = await deletePost(postId);
-        return res.status(200).json({
-            status: true,
-            message: '刪除貼文成功',
-            data: results,
-        });
+        sendSuccess(res, results, '刪除貼文成功');
     } catch (err) {
-        console.error('deletePost error:', err);
-        res.status(500).json({
-            status: false,
-            message: '刪除貼文失敗',
-            error: err.message,
-        });
+        sendError(res, '刪除貼文失敗', 500, err);
     }
 });
 
@@ -230,25 +162,13 @@ router.delete(community.deleteComment, authenticate, async (req, res) => {
     const { commentId } = req.body;
 
     if (!commentId) {
-        return res.status(400).json({
-            status: false,
-            message: '需要提供 commentId',
-        });
+        return sendError(res, '需要提供 commentId', 400);
     }
     try {
         const results = await deleteComment(commentId);
-        return res.status(200).json({
-            status: true,
-            message: '刪除留言成功',
-            data: results,
-        });
+        sendSuccess(res, results, '刪除留言成功');
     } catch (err) {
-        console.error('deleteComment error:', err);
-        res.status(500).json({
-            status: false,
-            message: '刪除留言失敗',
-            error: err.message,
-        });
+        sendError(res, '刪除留言失敗', 500, err);
     }
 });
 
@@ -256,25 +176,13 @@ router.get(community.getNoti, async (req, res) => {
     const { userId } = req.params;
 
     if (!userId) {
-        return res.status(400).json({
-            status: false,
-            message: '需要提供 userId',
-        });
+        return sendError(res, '需要提供 userId', 400);
     }
     try {
         const results = await getNoti(userId);
-        return res.status(200).json({
-            status: true,
-            message: '獲取通知成功',
-            noti: results,
-        });
+        sendSuccess(res, results, '獲取通知成功');
     } catch (err) {
-        console.error('getNoti error:', err);
-        res.status(500).json({
-            status: false,
-            message: '獲取通知失敗',
-            error: err.message,
-        });
+        sendError(res, '獲取通知失敗', 500, err);
     }
 });
 
@@ -283,25 +191,13 @@ router.post(community.markNotiAsRead, async (req, res) => {
     const { userId } = req.body;
 
     if (!userId || !notiId) {
-        return res.status(400).json({
-            status: false,
-            message: '需要提供 userId 和 notiId',
-        });
+        return sendError(res, '需要提供 userId 和 notiId', 400);
     }
     try {
         const results = await markNotiAsRead(notiId, userId);
-        return res.status(200).json({
-            status: true,
-            message: '已讀通知成功',
-            noti: results,
-        });
+        sendSuccess(res, results, '已讀通知成功');
     } catch (err) {
-        console.error('markNotiAsRead error:', err);
-        res.status(500).json({
-            status: false,
-            message: '已讀通知失敗',
-            error: err.message,
-        });
+        sendError(res, '已讀通知失敗', 500, err);
     }
 });
 

@@ -1,7 +1,7 @@
 import express from 'express';
 import { trip } from '../apiConfig.js';
 import { editAddMovie } from '../../services/index.js';
-//新增電影
+import { sendSuccess, sendError } from '../../utils/response-handler.js';
 
 const router = express.Router();
 
@@ -10,16 +10,12 @@ router.post(trip.editAddMovie, async (req, res) => {
         const { trip_detail_id, movie_id } = req.body;
         const result = await editAddMovie(trip_detail_id, movie_id);
         if (result) {
-            res.json({ message: 'Record updated successfully' });
+            sendSuccess(res, result, 'Record updated successfully');
         } else {
-            res.status(404).json({ message: 'No record found with the given ID' });
+            sendError(res, 'No record found with the given ID', 404);
         }
     } catch (error) {
-        console.error('Error in editAddMovie router:', error);
-        res.status(500).json({
-            message: 'Failed to update the database',
-            error: error.message,
-        });
+        sendError(res, 'Failed to update the database', 500, error);
     }
 });
 

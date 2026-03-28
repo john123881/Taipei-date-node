@@ -2,6 +2,7 @@ import express from 'express';
 import { bar } from '../apiConfig.js';
 import { createBarBooking, getBarBookingById } from '../../services/index.js';
 import authenticate from '../../middlewares/authenticate.js';
+import { sendSuccess, sendError } from '../../utils/response-handler.js';
 
 const barBookingRouter = express.Router();
 
@@ -15,7 +16,6 @@ barBookingRouter.post(bar.createBarBooking, async (req, res) => {
         bar_time_slot_id,
     } = req.body;
 
-
     if (
         !user_id ||
         !bar_id ||
@@ -23,11 +23,7 @@ barBookingRouter.post(bar.createBarBooking, async (req, res) => {
         !bar_booking_people_num ||
         !bar_time_slot_id
     ) {
-        return res.status(400).json({
-            status: false,
-            message:
-                '必須提供完整內容: user_id, bar_id, bar_booking_time, bar_booking_people_num, 和 bar_time_slot_id',
-        });
+        return sendError(res, '必須提供完整內容: user_id, bar_id, bar_booking_time, bar_booking_people_num, 和 bar_time_slot_id', 400);
     }
 
     try {
@@ -38,18 +34,9 @@ barBookingRouter.post(bar.createBarBooking, async (req, res) => {
             bar_booking_people_num,
             bar_time_slot_id
         );
-        res.status(201).json({
-            status: true,
-            message: '訂位新增成功',
-            booking: newBarBooking,
-        });
+        sendSuccess(res, newBarBooking, '訂位新增成功');
     } catch (err) {
-        console.error('createBarBooking error:', err);
-        res.status(500).json({
-            status: false,
-            message: '訂位新增失敗',
-            error: err.message,
-        });
+        sendError(res, '訂位新增失敗', 500, err);
     }
 });
 
@@ -58,10 +45,9 @@ barBookingRouter.get(bar.getBarBookingById, async (req, res) => {
     try {
         const { bar_id } = req.params;
         const results = await getBarBookingById(bar_id);
-        res.json(results);
+        sendSuccess(res, results);
     } catch (error) {
-        console.error('getBarBookingById error:', error);
-        res.status(500).json({ status: false, message: '伺服器錯誤', error: error.message });
+        sendError(res, '伺服器錯誤', 500, error);
     }
 });
 export default barBookingRouter;

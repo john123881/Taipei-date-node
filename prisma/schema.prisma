@@ -250,10 +250,15 @@ model comm_events_photo {
 }
 
 model comm_follows {
-  comm_follows_id Int      @id @default(autoincrement())
+  comm_follows_id Int         @id @default(autoincrement())
   follower_id     Int
   following_id    Int
-  created_at      DateTime @default(now()) @db.Timestamp(0)
+  created_at      DateTime    @default(now()) @db.Timestamp(0)
+  follower        member_user @relation("follower", fields: [follower_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction, map: "comm_follows_ibfk_1")
+  following       member_user @relation("following", fields: [following_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction, map: "comm_follows_ibfk_2")
+
+  @@index([follower_id], map: "comm_follows_ibfk_1")
+  @@index([following_id], map: "comm_follows_ibfk_2")
 }
 
 model comm_likes {
@@ -426,6 +431,8 @@ model member_user {
   member_game_record                            member_game_record[]
   member_points_inc                             member_points_inc[]
   trip_plans                                    trip_plans[]
+  comm_followers                                comm_follows[]        @relation("following")
+  comm_following                                comm_follows[]        @relation("follower")
 }
 
 model members {

@@ -2,37 +2,21 @@ import express from 'express';
 import { account } from '../apiConfig.js';
 import authenticate from '../../middlewares/authenticate.js';
 import { getSavedMovies, deleteSavedMovie } from '../../services/index.js';
+import { sendSuccess, sendError } from '../../utils/response-handler.js';
 
 const collectMovieRouter = express.Router();
 
 // 收藏 - 電影列表
 collectMovieRouter.get(account.collectMovie, authenticate, async (req, res) => {
-    const output = {
-        success: false,
-        error: '',
-        code: 0,
-        data: [],
-    };
-
     try {
         if (!req.my_jwt?.id) {
-            output.success = false;
-            output.code = 430;
-            output.error = '沒授權';
-            return res.json({ output });
+            return sendError(res, '沒授權', 401);
         }
         const sid = parseInt(req.params.sid) || 0;
         const page = parseInt(req.query.page) || 1;
         const perPage = 5;
 
         const { totalRows, totalPages, data } = await getSavedMovies(sid, page, perPage);
-
-        if (totalRows === 0) {
-            output.code = 440;
-            output.error = '無收藏';
-            output.data = [];
-            return res.json({ success: false, output });
-        }
 
         if (page < 1 || (totalPages > 0 && page > totalPages)) {
             const targetPage = page < 1 ? 1 : totalPages;
@@ -41,64 +25,36 @@ collectMovieRouter.get(account.collectMovie, authenticate, async (req, res) => {
             return res.redirect(`${req.originalUrl.split('?')[0]}?${qp}`);
         }
 
-        output.success = true;
-        output.data = data;
-        output.code = 200;
-
-        res.json({
-            success: true,
+        sendSuccess(res, data || [], null, {
             sid,
             totalRows,
             perPage,
             page,
             totalPages,
-            query: req.query,
-            output,
         });
 
     } catch (error) {
-        console.error('Collect Movie GET Error:', error);
-        output.success = false;
-        output.code = 500;
-        output.error = '伺服器錯誤';
-        res.status(500).json({ success: false, output });
+        sendError(res, '伺服器錯誤', 500, error);
     }
 });
 
 // 收藏 - 刪除電影
 collectMovieRouter.delete(account.collectMovieDelete, authenticate, async (req, res) => {
-    const output = {
-        success: false,
-        error: '',
-        code: 0,
-        data: [],
-    };
     try {
         if (!req.my_jwt?.id) {
-            output.success = false;
-            output.code = 430;
-            output.error = '沒授權';
-            return res.json({ output });
+            return sendError(res, '沒授權', 401);
         }
         const save_id = parseInt(req.params.save_id) || 0;
         const result = await deleteSavedMovie(save_id);
 
         if (!result) {
-            output.code = 401;
-            output.error = '沒這部電影';
-            return res.json({ output });
+            return sendError(res, '沒這部電影', 404);
         }
 
-        output.success = true;
-        output.action = 'remove';
-        res.json({ output });
+        sendSuccess(res, { action: 'remove' }, '刪除成功');
 
     } catch (error) {
-        console.error('Delete Saved Movie Error:', error);
-        output.success = false;
-        output.code = 500;
-        output.error = '伺服器錯誤';
-        res.status(500).json({ success: false, output });
+        sendError(res, '伺服器錯誤', 500, error);
     }
 });
 

@@ -8,6 +8,7 @@ import {
     getRecommendedFriends,
 } from '../../services/index.js';
 import authenticate from '../../middlewares/authenticate.js';
+import { sendSuccess, sendError } from '../../utils/response-handler.js';
 
 const router = express.Router();
 
@@ -15,11 +16,18 @@ const router = express.Router();
 router.get('/friends-list/api', async (req, res) => {
     try {
         const page = +req.query.page || 1;
-        const data = await getFriendList(page);
-        res.json(data);
+        const result = await getFriendList(page);
+        if (result && result.data) {
+            sendSuccess(res, result.data, null, {
+                totalRows: result.totalRows,
+                totalPages: result.totalPages,
+                page: result.page,
+            });
+        } else {
+            sendSuccess(res, result || []);
+        }
     } catch (error) {
-        console.error('getFriendList error:', error);
-        res.status(500).json({ status: false, message: '伺服器錯誤', error: error.message });
+        sendError(res, '伺服器錯誤', 500, error);
     }
 });
 
@@ -27,37 +35,35 @@ router.get('/friends-list/api', async (req, res) => {
 router.get('/friends-list/:friendship_id', authenticate, async (req, res) => {
     try {
         if (!req.my_jwt?.id) {
-            return res.status(401).json({ status: false, message: '沒授權' });
+            return sendError(res, '沒授權Token', 401);
         }
         const { friendship_id } = req.params;
         const data = await getFriendshipById(friendship_id);
         
         if (!data) {
-            return res.json({ success: false, msg: '沒有該筆資料' });
+            return sendError(res, '沒有該筆資料', 404);
         }
-        res.json({ success: true, data });
+        sendSuccess(res, data);
     } catch (error) {
-        console.error('getFriendshipById error:', error);
-        res.status(500).json({ status: false, message: '伺服器錯誤', error: error.message });
+        sendError(res, '伺服器錯誤', 500, error);
     }
 });
 
-// 新增一個好友請求 (確認是否重複)
+// 新增一個好友請求
 router.post('/friends-list/', authenticate, async (req, res) => {
     try {
         if (!req.my_jwt?.id) {
-            return res.status(401).json({ status: false, message: '沒授權' });
+            return sendError(res, '沒授權Token', 401);
         }
         const { user_id1, user_id2, friendship_status } = req.body;
         if (!user_id1 || !user_id2) {
-            return res.status(400).json({ status: false, message: '缺少必要欄位' });
+            return sendError(res, '缺少必要欄位', 400);
         }
 
         const result = await createFriendship(user_id1, user_id2, friendship_status);
-        res.json({ success: true, friendship_id: result.friendship_id, status: result.friendship_status });
+        sendSuccess(res, result, '好友請求已發送');
     } catch (error) {
-        console.error('createFriendship error:', error);
-        res.status(500).json({ status: false, message: '伺服器錯誤', error: error.message });
+        sendError(res, '伺服器錯誤', 500, error);
     }
 });
 
@@ -67,11 +73,13 @@ router.put('/friends-list/edit/:friendship_id', async (req, res) => {
         const { friendship_id } = req.params;
         const { friendship_status } = req.body;
         const result = await updateFriendshipStatus(friendship_id, friendship_status);
-        
-        res.json({ success: true, friendship_id: result.friendship_id, status: result.friendship_status });
+        if (result) {
+            sendSuccess(res, result, '狀態更新成功');
+        } else {
+            sendError(res, '更新失敗，找不到該筆好友關係', 404);
+        }
     } catch (error) {
-        console.error('updateFriendshipStatus error:', error);
-        res.status(500).json({ status: false, message: '伺服器錯誤', error: error.message });
+        sendError(res, '伺服器錯誤', 500, error);
     }
 });
 
@@ -79,18 +87,13 @@ router.put('/friends-list/edit/:friendship_id', async (req, res) => {
 router.get('/friends-list/accepted/:user_id', authenticate, async (req, res) => {
     try {
         if (!req.my_jwt?.id) {
-            return res.status(401).json({ status: false, message: '沒授權' });
+            return sendError(res, '沒授權Token', 401);
         }
         const { user_id } = req.params;
         const data = await getAcceptedFriends(user_id);
-        
-        if (!data || data.length === 0) {
-            return res.json({ success: false, msg: '沒有符合條件的資料' });
-        }
-        res.json({ success: true, data });
+        sendSuccess(res, data || []);
     } catch (error) {
-        console.error('getAcceptedFriends error:', error);
-        res.status(500).json({ status: false, message: '伺服器錯誤', error: error.message });
+        sendError(res, '伺服器錯誤', 500, error);
     }
 });
 
@@ -98,18 +101,13 @@ router.get('/friends-list/accepted/:user_id', authenticate, async (req, res) => 
 router.get('/friends-list/:user_id/:bar_type_id/:movie_type_id', authenticate, async (req, res) => {
     try {
         if (!req.my_jwt?.id) {
-            return res.status(401).json({ status: false, message: '沒授權' });
+            return sendError(res, '沒授權Token', 401);
         }
         const { user_id, bar_type_id, movie_type_id } = req.params;
         const data = await getRecommendedFriends(user_id, bar_type_id, movie_type_id);
-        
-        if (!data || data.length === 0) {
-            return res.json({ success: false, msg: '沒有符合條件的資料' });
-        }
-        res.json({ success: true, data });
+        sendSuccess(res, data || []);
     } catch (error) {
-        console.error('getRecommendedFriends error:', error);
-        res.status(500).json({ status: false, message: '伺服器錯誤', error: error.message });
+        sendError(res, '伺服器錯誤', 500, error);
     }
 });
 

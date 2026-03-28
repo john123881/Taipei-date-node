@@ -1,84 +1,59 @@
 import express from 'express';
 import { trip } from '../apiConfig.js';
-import { getPlans } from '../../services/index.js';
-import { createPlansAndCalendar } from '../../services/index.js';
-import { deletePlans } from '../../services/index.js';
-// 中介軟體，存取隱私會員資料用
+import { getPlans, createPlansAndCalendar, deletePlans } from '../../services/index.js';
 import authenticate from '../../middlewares/authenticate.js';
+import { sendSuccess, sendError } from '../../utils/response-handler.js';
 
 const router = express.Router();
-const app = express();
-app.use(express.json());
-
-router.use((req, res, next) => {
-    next();
-});
 
 router.get(trip.getPlans, authenticate, async (req, res) => {
-    const output = {
-        success: false,
-        action: '', // add, remove
-        error: '',
-        code: 0,
-    };
     if (!req.my_jwt?.id) {
-        output.success = false;
-        output.code = 430;
-        output.error = '沒授權';
-        return res.json(output);
+        return sendError(res, '沒授權', 401);
     }
-    const user_id = req.my_jwt.id; // 獲取 user_id
+    const user_id = req.my_jwt.id;
     try {
-        const results = await getPlans(user_id); // 將 user_id 傳遞给 getPlans 函數
-        res.json(results);
+        const results = await getPlans(user_id);
+        sendSuccess(res, results);
     } catch (error) {
-        console.error('Error fetching plans:', error);
-        res.status(500).json({ success: false, error: 'Error fetching plans' });
+        sendError(res, 'Error fetching plans', 500, error);
     }
 });
 
-//新增單筆資料，新增trip_plans時trip_calendar也會同時新增，他們的trip_rlan_id會對應到
+// 新增單筆資料
 router.post(trip.createPlansAndCalendar, authenticate, async (req, res) => {
-    const bodyData = req.body; // 定義 bodyData 變數
-    const output = {
-        success: false,
-        bodyData: req.body,
-        action: '', // add, remove
-        error: '',
-        code: 0,
-    };
-
     if (!req.my_jwt?.id) {
-        output.success = false;
-        output.code = 430;
-        output.error = '沒有授權';
-        return res.json(output);
+        return sendError(res, '沒有授權', 401);
     }
-    // 如果前端傳送的是 { tripPlan: { ... } }，解開它。否則直接使用 req.body。
-    const planData = bodyData.tripPlan || bodyData;
-    // 分離日曆資料，目前預設為空物件 (由 Service 建立基本紀錄)
-    const calendarData = bodyData.calendarData || {};
 
-    const results = await createPlansAndCalendar(
-        req.my_jwt.id,
-        req.body.tripPlan, // Extract the nested plan data
-        req.body.calendarData || {} // Provide an empty object if no calendar data exists
-    );
-
-    res.json(results);
+    try {
+        const results = await createPlansAndCalendar(
+            req.my_jwt.id,
+            req.body.tripPlan,
+            req.body.calendarData || {}
+        );
+        sendSuccess(res, results, '行程與日曆新增成功');
+    } catch (error) {
+        sendError(res, '行程與日曆新增失敗', 500, error);
+    }
 });
 
-//刪除單筆資料
+// 刪除單筆資料
 router.delete(trip.deletePlans, async (req, res) => {
-    const tripPlanId = +req.params.trip_plan_id;
+    try {
+        const tripPlanId = +req.params.trip_plan_id;
+        if (!tripPlanId) {
+            return sendError(res, '必須提供 trip_plan_id', 400);
+        }
 
-    // 呼叫刪除函示
-    const { success, message, error } = await deletePlans(tripPlanId);
+        const { success, message, error } = await deletePlans(tripPlanId);
 
-    if (success) {
-        res.json({ success: true, message });
-    } else {
-        res.status(500).json({ success: false, error });
+        if (success) {
+            sendSuccess(res, null, message);
+        } else {
+            sendError(res, error || '刪除失敗', 500);
+        }
+    } catch (error) {
+        sendError(res, '伺服器錯誤', 500, error);
     }
 });
 

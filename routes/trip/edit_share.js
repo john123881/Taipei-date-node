@@ -1,6 +1,7 @@
 import express from 'express';
 import { trip } from '../apiConfig.js';
 import { editShare } from '../../services/index.js';
+import { sendSuccess, sendError } from '../../utils/response-handler.js';
 
 const router = express.Router();
 
@@ -9,13 +10,12 @@ router.post(trip.editShare, async (req, res) => {
         const { trip_plan_id } = req.params;
         const result = await editShare(trip_plan_id);
         if (result) {
-            res.send('Trip plan successfully updated.');
+            sendSuccess(res, result, 'Trip plan successfully updated.');
         } else {
-            res.status(404).send('No trip plan found with the given ID');
+            sendError(res, 'No trip plan found with the given ID', 404);
         }
     } catch (error) {
-        console.error('Error in editShare router:', error);
-        res.status(500).send('Error updating data in the database');
+        sendError(res, 'Error updating data in the database', 500, error);
     }
 });
 

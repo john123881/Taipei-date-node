@@ -2,31 +2,19 @@ import express from 'express';
 import { account } from '../apiConfig.js';
 import authenticate from '../../middlewares/authenticate.js';
 import { getGameRecords } from '../../services/index.js';
+import { sendSuccess, sendError } from '../../utils/response-handler.js';
 
 const recordGameRouter = express.Router();
 
 // 紀錄 - 遊戲紀錄列表
 recordGameRouter.get(account.recordGame, authenticate, async (req, res) => {
-    const output = {
-        success: false,
-        error: '',
-        code: 0,
-        data: [],
-    };
-
     try {
         if (!req.my_jwt?.id) {
-            output.success = false;
-            output.code = 430;
-            output.error = '沒授權';
-            return res.json({ output });
+            return sendError(res, '沒授權', 401);
         }
 
         if (req.my_jwt?.id != req.params.sid) {
-            output.success = false;
-            output.code = 430;
-            output.error = 'UserID不匹配';
-            return res.json({ output });
+            return sendError(res, 'UserID不匹配', 403);
         }
 
         const sid = req.my_jwt?.id || 0;
@@ -43,13 +31,6 @@ recordGameRouter.get(account.recordGame, authenticate, async (req, res) => {
             sortDirection: req.query.sortDirection
         });
 
-        if (totalRows === 0) {
-            output.code = 440;
-            output.error = '無紀錄';
-            output.data = [];
-            return res.json({ success: false, output });
-        }
-
         if (page < 1 || (totalPages > 0 && page > totalPages)) {
             const targetPage = page < 1 ? 1 : totalPages;
             const newQuery = { ...req.query, page: targetPage };
@@ -57,27 +38,16 @@ recordGameRouter.get(account.recordGame, authenticate, async (req, res) => {
             return res.redirect(`${req.originalUrl.split('?')[0]}?${qp}`);
         }
 
-        output.success = true;
-        output.data = data;
-        output.code = 200;
-
-        res.json({
-            success: true,
+        sendSuccess(res, data || [], null, {
             sid,
             totalRows,
             page,
             totalPages,
             perPage,
-            query: req.query,
-            output,
         });
 
     } catch (error) {
-        console.error('Game Record GET Error:', error);
-        output.success = false;
-        output.code = 500;
-        output.error = '伺服器錯誤';
-        res.status(500).json({ success: false, output });
+        sendError(res, '伺服器錯誤', 500, error);
     }
 });
 

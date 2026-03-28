@@ -5,6 +5,7 @@ import {
     getBarBookingListById,
     deleteBarBooking,
 } from '../../services/index.js';
+import { sendSuccess, sendError } from '../../utils/response-handler.js';
 
 const barBookingListRouter = express.Router();
 
@@ -12,10 +13,9 @@ const barBookingListRouter = express.Router();
 barBookingListRouter.get(bar.getBarBookingList, async (req, res) => {
     try {
         const results = await getBarBookingList();
-        res.json(results);
+        sendSuccess(res, results);
     } catch (error) {
-        console.error('Error fetching bar booking list:', error);
-        res.status(500).send('Internal Server Error');
+        sendError(res, '伺服器錯誤', 500, error);
     }
 });
 
@@ -26,13 +26,9 @@ barBookingListRouter.get(
         const { user_id } = req.params;
         try {
             const results = await getBarBookingListById(user_id);
-            res.json(results);
+            sendSuccess(res, results);
         } catch (error) {
-            console.error(
-                `Error fetching bookings for user ${user_id}:`,
-                error
-            );
-            res.status(500).send('Internal Server Error');
+            sendError(res, '伺服器錯誤', 500, error);
         }
     }
 );
@@ -41,26 +37,14 @@ barBookingListRouter.delete(bar.deleteBarBooking, async (req, res) => {
     const barBookingId = +req.body.bar_booking_id;
 
     if (!barBookingId) {
-        return res.status(400).json({
-            status: false,
-            message: '必須提供 barBookingId',
-        });
+        return sendError(res, '必須提供 barBookingId', 400);
     }
 
     try {
         const results = await deleteBarBooking(barBookingId);
-        return res.status(201).json({
-            status: true,
-            message: '移除酒吧訂位成功',
-            data: results,
-        });
+        sendSuccess(res, results, '移除酒吧訂位成功');
     } catch (err) {
-        console.error('移除酒吧訂位錯誤:', err);
-        res.status(500).json({
-            status: false,
-            message: '移除酒吧訂位失敗',
-            error: err.message,
-        });
+        sendError(res, '移除酒吧訂位失敗', 500, err);
     }
 });
 

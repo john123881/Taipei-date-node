@@ -2,6 +2,7 @@ import express from 'express';
 import { account } from '../apiConfig.js';
 import authenticate from '../../middlewares/authenticate.js';
 import { getSavedList } from '../../services/index.js';
+import { sendSuccess, sendError } from '../../utils/response-handler.js';
 
 const collectListRouter = express.Router();
 
@@ -9,20 +10,17 @@ const collectListRouter = express.Router();
 collectListRouter.get(account.collectList, authenticate, async (req, res) => {
     try {
         if (!req.my_jwt?.id) {
-            return res.json({ success: false, error: '沒授權', code: 430 });
+            return sendError(res, '沒授權', 401);
         }
         const sid = parseInt(req.params.sid) || 0;
         const list = await getSavedList(sid);
 
-        res.json({
-            success: true,
-            totalRows: list.length,
-            rows: list,
+        sendSuccess(res, list || [], null, {
+            totalRows: (list || []).length,
         });
 
     } catch (error) {
-        console.error('Collect List Error:', error);
-        res.status(500).json({ success: false, error: '伺服器錯誤' });
+        sendError(res, '伺服器錯誤', 500, error);
     }
 });
 

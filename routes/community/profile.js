@@ -13,6 +13,7 @@ import {
     getFollowings,
 } from '../../services/index.js';
 import authenticate from '../../middlewares/authenticate.js';
+import { sendSuccess, sendError } from '../../utils/response-handler.js';
 
 const router = express.Router();
 
@@ -20,7 +21,7 @@ router.get(community.getPosts, async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 12; // 默認每頁12個貼文
     const results = await getPosts(page, limit);
-    res.json(results);
+    sendSuccess(res, results);
 });
 
 router.get(community.getUserPosts, async (req, res) => {
@@ -31,14 +32,13 @@ router.get(community.getUserPosts, async (req, res) => {
         const results = await getUserPosts(userId, page, limit);
 
         if (!results || results.length === 0) {
-            return res.json([]);
+            return sendSuccess(res, []);
         }
 
-        const newResults = results.map((obj) => ({ ...obj, success: true }));
-        res.json(newResults);
+        const newResults = results.map((obj) => ({ ...obj }));
+        sendSuccess(res, newResults);
     } catch (error) {
-        console.error('getUserPosts error:', error);
-        res.status(500).json({ status: false, message: '伺服器錯誤', error: error.message });
+        sendError(res, '獲取貼文失敗', 500, error);
     }
 });
 
@@ -46,10 +46,9 @@ router.get(community.getFollows, async (req, res) => {
     try {
         const { userId } = req.params;
         const results = await getFollows(userId, userId);
-        res.json(results);
+        sendSuccess(res, results);
     } catch (error) {
-        console.error('getFollows error:', error);
-        res.status(500).json({ status: false, message: '伺服器錯誤', error: error.message });
+        sendError(res, '伺服器錯誤', 500, error);
     }
 });
 
@@ -67,34 +66,21 @@ router.get(community.getCountPosts, async (req, res) => {
 router.get(community.getUserInfo, async (req, res) => {
     const { userId } = req.params;
     const results = await getUserInfo(userId);
-    res.json(results);
+    sendSuccess(res, results);
 });
 
 router.post(community.follow, authenticate, async (req, res) => {
     const { userId, FollowingId } = req.body;
 
     if (!userId || !FollowingId) {
-        return res.status(400).json({
-            status: false,
-            message: '必須提供 follower_id 和 following_id',
-        });
+        return sendError(res, '必須提供 follower_id 和 following_id', 400);
     }
 
     try {
         const results = await follow(userId, FollowingId);
-
-        return res.status(201).json({
-            status: true,
-            message: '追蹤成功',
-            data: results,
-        });
+        sendSuccess(res, results, '追蹤成功');
     } catch (err) {
-        console.error('follow error:', err);
-        res.status(500).json({
-            status: false,
-            message: '追蹤失敗',
-            error: err.message,
-        });
+        sendError(res, '追蹤失敗', 500, err);
     }
 });
 
@@ -102,27 +88,14 @@ router.delete(community.unfollow, authenticate, async (req, res) => {
     const { userId, FollowingId } = req.body;
 
     if (!userId || !FollowingId) {
-        return res.status(400).json({
-            status: false,
-            message: '必須提供 follower_id 和 following_id',
-        });
+        return sendError(res, '必須提供 follower_id 和 following_id', 400);
     }
 
     try {
         const results = await unfollow(userId, FollowingId);
-
-        return res.status(200).json({
-            status: true,
-            message: '取消追蹤成功',
-            data: results,
-        });
+        sendSuccess(res, results, '取消追蹤成功');
     } catch (err) {
-        console.error('unfollow error:', err);
-        res.status(500).json({
-            status: false,
-            message: '取消追蹤失敗',
-            error: err.message,
-        });
+        sendError(res, '取消追蹤失敗', 500, err);
     }
 });
 
@@ -130,20 +103,13 @@ router.get(community.checkFollowStatus, authenticate, async (req, res) => {
     const { userId, followingId } = req.query;
 
     if (!userId || !followingId) {
-        return res.status(400).json({
-            status: false,
-            message: '需要提供 userId 和 followingId',
-        });
+        return sendError(res, '需要提供 userId 和 followingId', 400);
     }
     try {
         const result = await checkFollowStatus(userId, followingId);
-        res.json(result);
+        sendSuccess(res, result);
     } catch (err) {
-        console.error('Error checking follow status:', err);
-        res.status(500).json({
-            message: 'Error checking follow status',
-            error: err.message,
-        });
+        sendError(res, 'Error checking follow status', 500, err);
     }
 });
 
@@ -151,21 +117,14 @@ router.get(community.getFollowers, async (req, res) => {
     const { followingId } = req.params;
 
     if (!followingId) {
-        return res.status(400).json({
-            status: false,
-            message: '需要提供 followingId',
-        });
+        return sendError(res, '需要提供 followingId', 400);
     }
 
     try {
         const result = await getFollowers(followingId);
-        res.json(result);
+        sendSuccess(res, result);
     } catch (err) {
-        console.error('Error checking followers:', err);
-        res.status(500).json({
-            message: 'Error checking followers',
-            error: err.message,
-        });
+        sendError(res, 'Error checking followers', 500, err);
     }
 });
 
@@ -173,21 +132,14 @@ router.get(community.getFollowings, async (req, res) => {
     const { followerId } = req.params;
 
     if (!followerId) {
-        return res.status(400).json({
-            status: false,
-            message: '需要提供 followerId',
-        });
+        return sendError(res, '需要提供 followerId', 400);
     }
 
     try {
         const result = await getFollowings(followerId);
-        res.json(result);
+        sendSuccess(res, result);
     } catch (err) {
-        console.error('Error checking followings:', err);
-        res.status(500).json({
-            message: 'Error checking followings',
-            error: err.message,
-        });
+        sendError(res, 'Error checking followings', 500, err);
     }
 });
 

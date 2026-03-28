@@ -14,6 +14,7 @@ import {
     googleLogin
 } from '../services/index.js';
 import prisma from '../utils/prisma-client.js';
+import { sendSuccess, sendError } from '../utils/response-handler.js';
 
 const authRouter = express.Router();
 
@@ -21,51 +22,50 @@ const authRouter = express.Router();
 authRouter.get('/login-check', authenticate, async (req, res) => {
     const sid = req.query?.sid;
     if (!req.my_jwt?.id) {
-        return res.json({ success: false, code: 430, error: '沒授權TOKEN' });
+        return sendError(res, '沒授權TOKEN', 401);
     }
     const jid = req.my_jwt?.id;
-    if (jid.toString() !== sid.toString()) {
-        return res.json({ success: false, code: 430, error: 'UserID不匹配' });
+    if (jid.toString() !== sid?.toString()) {
+        return sendError(res, 'UserID不匹配', 403);
     }
     
-    const user = await prisma.member_user.findUnique({
-        where: { user_id: Number(jid) }
-    });
+    try {
+        const user = await prisma.member_user.findUnique({
+            where: { user_id: Number(jid) }
+        });
 
-    if (!user) {
-        return res.json({ result: false, error: '沒有此user_id', msg: '沒有此user_id' });
+        if (!user) {
+            return sendError(res, '沒有此user_id', 404);
+        }
+
+        sendSuccess(res, null, '確認成功，有Token，UserID也符合');
+    } catch (error) {
+        sendError(res, '伺服器錯誤', 500, error);
     }
-
-    return res.json({ success: true, msg: '確認成功，有Token，UserID也符合' });
 });
 
 // 登入(JWT)
 authRouter.post('/login', async (req, res) => {
     const { email, password } = req.body;
     if (!email || !password) {
-        return res.json({ success: false, error: '請填寫登入資訊', code: 400 });
+        return sendError(res, '請填寫登入資訊', 400);
     }
 
     try {
         const result = await loginUser(email, password);
         if (result.success && result.data.token) {
-            // 設定 httpOnly Cookie
             res.cookie('token', result.data.token, {
                 httpOnly: true,
-                secure: true, // Render 使用的是 HTTPS
-                sameSite: 'None', // 跨網域連線必備
-                maxAge: 3 * 24 * 60 * 60 * 1000, // 3天，與 JWT 過期時間一致
+                secure: true,
+                sameSite: 'None',
+                maxAge: 3 * 24 * 60 * 60 * 1000,
             });
-            
-            // 為了不影響前端結構，暫時保留 data.token 回傳，但前端應改為不再使用它
-            // 或是您可以選擇移除它，強迫前端改用 Cookie
-            res.json(result);
+            sendSuccess(res, result.data, result.message);
         } else {
-            res.json(result);
+            sendError(res, result.message || '登入失敗', 401);
         }
     } catch (error) {
-        console.error('Login Error details:', error); // Log full error details
-        res.status(500).json({ success: false, error: '伺服器錯誤', details: error.message });
+        sendError(res, '伺服器錯誤', 500, error);
     }
 });
 
@@ -76,18 +76,18 @@ authRouter.post('/register-send-otp', async (req, res) => {
     const resultEmail = schemaEmail.safeParse(email);
 
     if (!resultEmail.success) {
-        return res.json({ success: false, error: '錯誤 - 請填寫正確的電子郵件格式' });
+        return sendError(res, '錯誤 - 請填寫正確的電子郵件格式', 400);
     }
 
     try {
         const existingUser = await prisma.member_user.findFirst({ where: { email: email.trim() } });
         if (existingUser) {
-            return res.json({ success: false, error: '錯誤 - 此Email已註冊過此電子郵件' });
+            return sendError(res, '錯誤 - 此Email已註冊過此電子郵件', 400);
         }
 
         const otp = await createOtpForRegister(email);
         if (!otp.token) {
-            return res.json({ success: false, error: '錯誤 - 60秒內要求重新產生驗証碼' });
+            return sendError(res, '錯誤 - 60秒內要求重新產生驗証碼', 429);
         }
 
         const mailOptions = {
@@ -98,12 +98,11 @@ authRouter.post('/register-send-otp', async (req, res) => {
         };
 
         transporter.sendMail(mailOptions, (err) => {
-            if (err) return res.status(400).json({ success: false, error: '寄信失敗' });
-            res.json({ success: true, message: '驗證碼已發送到您的信箱' });
+            if (err) return sendError(res, '寄信失敗', 500, err);
+            sendSuccess(res, null, '驗證碼已發送到您的信箱');
         });
     } catch (error) {
-        console.error('Send Register OTP Error:', error);
-        res.status(500).json({ success: false, error: '伺服器錯誤' });
+        sendError(res, '伺服器錯誤', 500, error);
     }
 });
 
@@ -111,18 +110,21 @@ authRouter.post('/register-send-otp', async (req, res) => {
 authRouter.post('/register', async (req, res) => {
     const { email, validCode, username, password } = req.body;
     if (!email || !validCode || !username || !password) {
-        return res.json({ success: false, error: '請填寫註冊資訊', code: 460 });
+        return sendError(res, '請填寫註冊資訊', 400);
     }
 
     try {
         const otpCheck = await verifyOtp(email, validCode);
-        if (!otpCheck.success) return res.json(otpCheck);
+        if (!otpCheck.success) return sendError(res, otpCheck.message || '驗證碼錯誤', 400);
 
         const result = await registerUser(username, email, password);
-        res.json(result);
+        if (result.success) {
+            sendSuccess(res, result.data, result.message);
+        } else {
+            sendError(res, result.message || '註冊失敗', 400);
+        }
     } catch (error) {
-        console.error('Register Error:', error);
-        res.status(500).json({ success: false, error: '註冊時發生錯誤' });
+        sendError(res, '註冊時發生錯誤', 500, error);
     }
 });
 
@@ -133,21 +135,21 @@ authRouter.post('/forget-password-send-otp', async (req, res) => {
     const resultEmail = schemaEmail.safeParse(email);
 
     if (!resultEmail.success) {
-        return res.json({ success: false, error: '錯誤 - 請填寫正確的電子郵件格式' });
+        return sendError(res, '錯誤 - 請填寫正確的電子郵件格式', 400);
     }
 
     try {
         const user = await prisma.member_user.findFirst({ where: { email: email.trim() } });
         if (!user) {
-            return res.json({ success: false, error: '錯誤 - 使用者電子郵件不存在' });
+            return sendError(res, '錯誤 - 使用者電子郵件不存在', 404);
         }
         if (user.google_uid !== null) {
-            return res.json({ success: false, error: '綁定google登入之電子郵件不適用' });
+            return sendError(res, '綁定google登入之電子郵件不適用', 400);
         }
 
         const otp = await createOtpForPassword(email, user.user_id);
         if (!otp.token) {
-            return res.json({ success: false, error: '錯誤 - 60秒內要求重新產生驗証碼' });
+            return sendError(res, '錯誤 - 60秒內要求重新產生驗証碼', 429);
         }
 
         const mailOptions = {
@@ -158,12 +160,11 @@ authRouter.post('/forget-password-send-otp', async (req, res) => {
         };
 
         transporter.sendMail(mailOptions, (err) => {
-            if (err) return res.status(400).json({ success: false, error: '寄信失敗' });
-            res.json({ success: true, message: '驗證碼已發送到您的信箱' });
+            if (err) return sendError(res, '寄信失敗', 500, err);
+            sendSuccess(res, null, '驗證碼已發送到您的信箱');
         });
     } catch (error) {
-        console.error('Send Password OTP Error:', error);
-        res.status(500).json({ success: false, error: '伺服器錯誤' });
+        sendError(res, '伺服器錯誤', 500, error);
     }
 });
 
@@ -171,22 +172,25 @@ authRouter.post('/forget-password-send-otp', async (req, res) => {
 authRouter.put('/forget-password-edit', async (req, res) => {
     const { email, validCode, password, confirmPassword } = req.body;
     if (!email || !validCode || !password || !confirmPassword) {
-        return res.json({ success: false, error: '缺少必填資料', code: 460 });
+        return sendError(res, '缺少必填資料', 400);
     }
 
     if (password !== confirmPassword) {
-        return res.json({ success: false, error: '確認密碼不符' });
+        return sendError(res, '確認密碼不符', 400);
     }
 
     try {
         const otpCheck = await verifyOtp(email, validCode);
-        if (!otpCheck.success) return res.json(otpCheck);
+        if (!otpCheck.success) return sendError(res, otpCheck.message || '驗證碼錯誤', 400);
 
         const result = await updatePasswordByOtp(email, password);
-        res.json(result);
+        if (result.success) {
+            sendSuccess(res, result.data, result.message);
+        } else {
+            sendError(res, result.message || '修改密碼失敗', 400);
+        }
     } catch (error) {
-        console.error('Forget Password Edit Error:', error);
-        res.status(500).json({ success: false, error: '修改密碼時發生錯誤' });
+        sendError(res, '修改密碼時發生錯誤', 500, error);
     }
 });
 
@@ -201,15 +205,15 @@ authRouter.post('/google-login', async (req, res) => {
                 sameSite: 'None',
                 maxAge: 3 * 24 * 60 * 60 * 1000,
             });
+            sendSuccess(res, result.data, result.message);
+        } else {
+            sendError(res, result.message || 'Google登入失敗', 401);
         }
-        res.json(result);
     } catch (error) {
-        console.error('Google Login Error:', error);
-        res.status(500).json({ success: false, error: 'Google登入時發生錯誤' });
+        sendError(res, 'Google登入時發生錯誤', 500, error);
     }
 });
 
-export default authRouter;
 // 登出
 authRouter.post('/logout', (req, res) => {
     res.clearCookie('token', {
@@ -217,5 +221,7 @@ authRouter.post('/logout', (req, res) => {
         secure: true,
         sameSite: 'None',
     });
-    res.json({ success: true, message: '已成功登出' });
+    sendSuccess(res, null, '已成功登出');
 });
+
+export default authRouter;

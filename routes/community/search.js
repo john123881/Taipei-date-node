@@ -1,6 +1,7 @@
 import express from 'express';
 import { community } from '../apiConfig.js';
 import { searchUsers } from '../../services/index.js';
+import { sendSuccess, sendError } from '../../utils/response-handler.js';
 
 const router = express.Router();
 
@@ -9,17 +10,13 @@ router.get(community.searchUsers, async (req, res) => {
         const { searchTerm } = req.query;
 
         if (!searchTerm) {
-            return res.status(400).json({
-                status: false,
-                message: '需要提供 searchTerm',
-            });
+            return sendError(res, '需要提供 searchTerm', 400);
         }
 
         const results = await searchUsers(searchTerm);
-        res.json(results);
+        sendSuccess(res, results);
     } catch (error) {
-        console.error('searchUsers error:', error);
-        res.status(500).json({ status: false, message: '伺服器錯誤', error: error.message });
+        sendError(res, '伺服器錯誤', 500, error);
     }
 });
 

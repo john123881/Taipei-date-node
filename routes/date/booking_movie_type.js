@@ -1,5 +1,6 @@
 import express from 'express';
 import { getMovieTypes } from '../../services/index.js';
+import { sendSuccess, sendError } from '../../utils/response-handler.js';
 
 const router = express.Router();
 
@@ -7,11 +8,18 @@ const router = express.Router();
 router.get('/booking_movie_type/api', async (req, res) => {
     try {
         const page = +req.query.page || 1;
-        const data = await getMovieTypes(page);
-        res.json(data);
+        const result = await getMovieTypes(page);
+        if (result && result.data) {
+            sendSuccess(res, result.data, null, {
+                totalRows: result.totalRows,
+                totalPages: result.totalPages,
+                page: result.page,
+            });
+        } else {
+            sendSuccess(res, result || []);
+        }
     } catch (error) {
-        console.error('getMovieTypes error:', error);
-        res.status(500).json({ status: false, message: '伺服器錯誤', error: error.message });
+        sendError(res, '伺服器錯誤', 500, error);
     }
 });
 
