@@ -24,17 +24,27 @@ export const sendSuccess = (res, data, message = 'Success', extra = {}) => {
  * @param {Object} res Express response object
  * @param {string} message 錯誤訊息
  * @param {number} statusCode HTTP 狀態碼 (預設 500)
- * @param {any} error 原始錯誤資訊 (僅在開發環境回傳)
+ * @param {any} error 原始錯誤資訊
+ * @param {any} code 自定義錯誤代碼
  */
-export const sendError = (res, message = 'Error', statusCode = 500, error = null) => {
+export const sendError = (res, message = 'Error', statusCode = 500, error = null, code = null) => {
   const response = {
     success: false,
     message
   };
 
-  // 非正式環境時，回傳詳細錯誤資訊以便除錯
-  if (error && process.env.NODE_ENV !== 'production') {
-    response.error = error.message || error;
+  if (code !== null) {
+    response.code = code;
+  }
+
+  // 為了相容部分舊有前端邏輯，如果 message 為空但有 error，則將 error 內容當作 message
+  if (!message && error) {
+    response.message = typeof error === 'string' ? error : (error.message || 'Error');
+  }
+
+  // 非正式環境或有提供詳細錯誤時，回傳 error 欄位
+  if (error) {
+    response.error = typeof error === 'string' ? error : (error.message || error);
   }
 
   return res.status(statusCode).json(response);

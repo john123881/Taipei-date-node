@@ -60,9 +60,10 @@ authRouter.post('/login', async (req, res) => {
                 sameSite: 'None',
                 maxAge: 3 * 24 * 60 * 60 * 1000,
             });
-            sendSuccess(res, result.data, result.message);
+            sendSuccess(res, result.data, result.message || '登入成功');
         } else {
-            sendError(res, result.message || '登入失敗', 401);
+            // 將服務層回傳的 error 與 code 傳遞給前端
+            sendError(res, result.message || result.error || '登入失敗', 401, null, result.code);
         }
     } catch (error) {
         sendError(res, '伺服器錯誤', 500, error);
