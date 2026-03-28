@@ -15,6 +15,7 @@ import { isOriginAllowed } from './utils/cors-config.js';
 
 // 指定要加載的 dotenv 檔案名稱
 dotenv.config(); // 預設就會讀取同目錄下的 .env
+import { sendError } from './utils/response-handler.js';
 
 // 中介軟體
 // 已移至各路由中使用
@@ -93,106 +94,13 @@ app.get('/', (req, res) => {
 // 認證模組 (登入、註冊、OTP、Google登入)
 app.use('/', authRouter);
 
-// 會員模組
-app.use(
-    '/account',
-    accountRouter.gameRecordRouter,
-    accountRouter.addDataRouter,
-    accountRouter.profileRouter,
-    accountRouter.editProfileRouter,
-    accountRouter.uploadAvatarRouter,
-    accountRouter.changePasswordRouter,
-    accountRouter.recordPointRouter,
-    accountRouter.recordGameRouter,
-    accountRouter.collectPostRouter,
-    accountRouter.collectBarRouter,
-    accountRouter.collectMovieRouter,
-    accountRouter.collectListRouter,
-);
-
-// 社群模組
-app.use(
-    '/community',
-    communityRouter.eventsRouter,
-    communityRouter.postRouter,
-    communityRouter.profileRouter,
-    communityRouter.createRouter,
-    communityRouter.exploreRouter,
-    communityRouter.searchRouter,
-    communityRouter.postPageRouter
-);
-
-// 行程規劃模組
-app.use(
-    '/trip',
-    tripRouter.tripPlansRouter,
-    tripRouter.myDetailsRouter,
-    tripRouter.otherTripRouter,
-    tripRouter.contentMorningRouter,
-    tripRouter.contentNoonRouter,
-    tripRouter.contentNightRouter,
-    tripRouter.contentAllDayRouter,
-    tripRouter.myBarPhotoRouter,
-    tripRouter.myMoviePhotoRouter,
-    tripRouter.barNameRouter,
-    tripRouter.editShareRouter,
-    tripRouter.editUnshareRouter,
-    tripRouter.addMorningRouter,
-    tripRouter.getBarSavedRouter,
-    tripRouter.getMovieRouter,
-    tripRouter.editAddBarRouter,
-    tripRouter.editAddMovieRouter,
-    tripRouter.addNoonRouter,
-    tripRouter.addNightRouter,
-    tripRouter.deleteDetailRouter,
-    tripRouter.getMovieWithIdRouter,
-    tripRouter.uploadTripPhotoRouter,
-    tripRouter.editDnNRouter,
-    tripRouter.addContentBarRouter,
-    tripRouter.addOtherContentRouter,
-    tripRouter.addContentMovieRouter
-);
-
-// 約會/好友模組
-app.use(
-    '/date',
-    dateRouter.barTypeRouter,
-    dateRouter.bookingMovieTypeRouter,
-    dateRouter.friendListRouter,
-    dateRouter.friendshipsMessageRouter,
-    dateRouter.userInterestRouter
-);
-
-// 酒吧模組
-app.use(
-    '/bar',
-    barRouter.barListRouter,
-    barRouter.barListTypeRouter,
-    barRouter.barListAreaRouter,
-    barRouter.barListRadomRouter,
-    barRouter.barListAuthRouter,
-    barRouter.barListSportRouter,
-    barRouter.barListMusicRouter,
-    barRouter.barListForeignRouter,
-    barRouter.barListSpecialtyRouter,
-    barRouter.barListOthersRouter,
-    barRouter.barTypeRouter,
-    barRouter.barAreaRouter,
-    barRouter.barDetailRouter,
-    barRouter.barRatingRouter,
-    barRouter.barRatingAverageRouter,
-    barRouter.barBookingListRouter,
-    barRouter.barBookingRouter,
-    barRouter.barSavedRouter,
-    barRouter.barSearchRouter
-);
-
-// 訂票模組
-app.use(
-    '/booking',
-    bookingRouter.movieListrouter,
-    bookingRouter.movieListTypeRouter
-);
+// 各大功能模組
+app.use('/account', accountRouter);
+app.use('/community', communityRouter);
+app.use('/trip', tripRouter);
+app.use('/date', dateRouter);
+app.use('/bar', barRouter);
+app.use('/booking', bookingRouter);
 
 // 靜態內容
 app.use('/', express.static('public'));
@@ -213,5 +121,25 @@ server.listen(port, '0.0.0.0', () => {
 /* 404 頁面 */
 app.use((req, res) => {
     res.status(404).render('404');
+});
+
+/**
+ * 全域錯誤處理中介軟體 (Global Error Handler)
+ * 接收 catchAsync 丟出的錯誤並統一回傳。
+ */
+app.use((err, req, res, next) => {
+    console.error('[Global Error Handler]:', err);
+    
+    // 如果是 zod 驗證錯誤，可以特別處理 (選填)
+    if (err.name === 'ZodError') {
+        return sendError(res, '資料格式驗證失敗', 400, err.errors);
+    }
+    
+    sendError(
+        res, 
+        err.message || '伺服器發生未預期的錯誤', 
+        err.statusCode || 500, 
+        err
+    );
 });
 

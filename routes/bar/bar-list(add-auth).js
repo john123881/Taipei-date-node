@@ -1,20 +1,21 @@
 import express from 'express';
 import { bar } from '../apiConfig.js';
 import { getBarList } from '../../services/index.js';
-// 中介軟體，存取隱私會員資料用
 import authenticate from '../../middlewares/authenticate.js';
+import { sendSuccess, sendError } from '../../utils/response-handler.js';
 
 const barListAuthRouter = express.Router();
 
 barListAuthRouter.get(bar.getBarList, authenticate, async (req, res) => {
     if (!req.my_jwt?.id) {
-        return res.json({
-            error: 'error',
-            success: false,
-        });
+        return sendError(res, '沒授權TOKEN', 401);
     }
-    const results = await getBarList();
-    res.json(results);
+    try {
+        const results = await getBarList();
+        sendSuccess(res, results);
+    } catch (error) {
+        sendError(res, '伺服器錯誤', 500, error);
+    }
 });
 // filter: query string use effect
 

@@ -1,18 +1,23 @@
 import express from 'express';
 import { bar } from '../../apiConfig.js';
-import { getBarListMusic } from '../../../services/index.js';
+import { getFilteredBarList } from '../../../services/index.js';
+import { sendSuccess, sendError } from '../../../utils/response-handler.js';
 
 const barListMusicRouter = express.Router();
 
-// Sports bars
+// Music bars
 barListMusicRouter.get(bar.getBarListMusic, async (req, res) => {
     try {
-        const results = await getBarListMusic();
-        res.json(results);
+        const { area } = req.query;
+        const results = await getFilteredBarList({ 
+            bar_type_id: 2, 
+            bar_area_id: area 
+        });
+        sendSuccess(res, results);
     } catch (error) {
-        console.error('getBarListMusic error:', error);
-        res.status(500).json({ status: false, message: '伺服器錯誤', error: error.message });
+        sendError(res, '伺服器錯誤', 500, error);
     }
 });
+
 
 export default barListMusicRouter;

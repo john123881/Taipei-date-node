@@ -1,4 +1,4 @@
-// Account routes
+import express from 'express';
 import addDataRouter from './add-data.js';
 import profileRouter from './profile.js';
 import editProfileRouter from './edit-profile.js';
@@ -12,7 +12,9 @@ import collectBarRouter from './collect-bar.js';
 import collectMovieRouter from './collect-movie.js';
 import collectListRouter from './collect-list.js';
 
-const accountRouter = {
+const accountRouter = express.Router();
+
+accountRouter.use('/', 
     addDataRouter,
     profileRouter,
     editProfileRouter,
@@ -24,7 +26,7 @@ const accountRouter = {
     collectPostRouter,
     collectBarRouter,
     collectMovieRouter,
-    collectListRouter,
-};
+    collectListRouter
+);
 
 export default accountRouter;

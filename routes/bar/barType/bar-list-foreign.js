@@ -1,18 +1,23 @@
 import express from 'express';
 import { bar } from '../../apiConfig.js';
-import { getBarListForeign } from '../../../services/index.js';
+import { getFilteredBarList } from '../../../services/index.js';
+import { sendSuccess, sendError } from '../../../utils/response-handler.js';
 
 const barListForeignRouter = express.Router();
 
-// Sports bars
+// Foreign bars
 barListForeignRouter.get(bar.getBarListForeign, async (req, res) => {
     try {
-        const results = await getBarListForeign();
-        res.json(results);
+        const { area } = req.query;
+        const results = await getFilteredBarList({ 
+            bar_type_id: 3, 
+            bar_area_id: area 
+        });
+        sendSuccess(res, results);
     } catch (error) {
-        console.error('getBarListForeign error:', error);
-        res.status(500).json({ status: false, message: '伺服器錯誤', error: error.message });
+        sendError(res, '伺服器錯誤', 500, error);
     }
 });
+
 
 export default barListForeignRouter;

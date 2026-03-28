@@ -1,3 +1,4 @@
+import express from 'express';
 import tripPlansRouter from './trip_plans.js';
 import myDetailsRouter from './my_details.js';
 import otherTripRouter from './other_plans.js';
@@ -26,7 +27,9 @@ import addContentMovieRouter from './add_content_movie.js';
 //將他人行程加入月曆
 import addOtherContentRouter from './add_otherTrip.js';
 
-const tripRouter = {
+const tripRouter = express.Router();
+
+tripRouter.use('/', 
     tripPlansRouter,
     myDetailsRouter,
     otherTripRouter,
@@ -42,17 +45,17 @@ const tripRouter = {
     addMorningRouter,
     getBarSavedRouter,
     getMovieRouter,
+    getMovieWithIdRouter,
     editAddBarRouter,
     editAddMovieRouter,
     addNoonRouter,
     addNightRouter,
     deleteDetailRouter,
-    getMovieWithIdRouter,
     uploadTripPhotoRouter,
     editDnNRouter,
     addContentBarRouter,
     addOtherContentRouter,
-    addContentMovieRouter,
-};
+    addContentMovieRouter
+);
 
 export default tripRouter;
