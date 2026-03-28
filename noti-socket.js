@@ -3,6 +3,7 @@ import express from 'express';
 import prisma from './utils/prisma-client.js';
 import authenticate from './middlewares/authenticate.js';
 import cors from 'cors';
+import logger from './utils/logger.js';
 
 const io = new Server({
     cors: {
@@ -31,11 +32,11 @@ const getUser = (username) => {
 // Get Notification router is in routes/home
 
 io.on('connection', (socket) => {
-    // console.log('someone has connected!');
+    // logger.info('someone has connected!');
 
     socket.on('newUser', (username) => {
         addNewUser(username, socket.id);
-        // console.log(`Added new user: ${username}`);
+        logger.info(`Notification Socket: Added new user: ${username}`);
     });
 
     socket.on('sendNotification', async (data) => {
@@ -88,7 +89,7 @@ io.on('connection', (socket) => {
                 });
             }
         } catch (error) {
-            console.error('Failed to save notification:', error);
+            logger.error('Failed to save notification', error);
 
             // 向發送者回應通知保存失敗
             socket.emit('notificationError', {
@@ -113,14 +114,14 @@ io.on('connection', (socket) => {
                 }
             });
 
-            console.log('Notification removed from database');
+            logger.info('Notification removed from database');
 
             socket.emit('notificationRemoved', {
                 status: true,
                 message: '通知已移除',
             });
         } catch (error) {
-            console.error('Failed to remove notification:', error);
+            logger.error('Failed to remove notification', error);
 
             socket.emit('notificationError', {
                 status: false,
@@ -143,14 +144,14 @@ io.on('connection', (socket) => {
                 }
             });
 
-            console.log('Notification removed from database');
+            logger.info('Notification removed from database');
 
             socket.emit('notificationRemoved', {
                 status: true,
                 message: '通知已移除',
             });
         } catch (error) {
-            console.error('Failed to remove notification:', error);
+            logger.error('Failed to remove follow notification', error);
 
             socket.emit('notificationError', {
                 status: false,
@@ -161,9 +162,11 @@ io.on('connection', (socket) => {
     });
 
     socket.on('disconnect', () => {
-        // console.log('someone has left');
+        logger.info('Notification Socket: user disconnected');
         removeUser(socket.id);
     });
 });
 
-io.listen(3008);
+io.listen(3008, () => {
+    logger.info('Notification Socket Server Started at http://localhost:3008');
+});

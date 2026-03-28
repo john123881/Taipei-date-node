@@ -31,20 +31,20 @@ io.use((socket, next) => {
 
     if (typeof token === 'string' && token.startsWith('Bearer ')) {
         const token2 = token.slice(7);
-        // console.log('Token 2:', token2);
+        // logger.info('Token 2:', token2);
 
         try {
             const decodedToken = jsonwebtoken.verify(
                 token2,
                 process.env.JWT_SECRET
             );
-            // console.log('Decoded token:', decodedToken);
+            // logger.info('Decoded token:', decodedToken);
             // 解析 token 並將用戶訊息加到 socket 中
             socket.userId = decodedToken.id;
             socket.username = decodedToken.username;
             return next();
         } catch (ex) {
-            // console.log({ ex });
+            logger.error('Socket Auth Error', ex);
             return next(new Error('Invalid token'));
         }
     }
@@ -54,14 +54,14 @@ io.use((socket, next) => {
 
 // 在線用戶列表
 const onlineUsers = new Set();
-// console.log(onlineUsers);
+// logger.info(onlineUsers);
 
 io.on('connection', (socket) => {
-    // console.log(`a user connected ${socket.userId}`);
+    logger.info(`a user connected ${socket.userId}`);
 
     // 用戶連接時，將其ID加入在線用戶列表
     onlineUsers.add(socket.userId);
-    // console.log(`Current online users: ${Array.from(onlineUsers)}`); // 紀錄在線用戶列表
+    // logger.info(`Current online users: ${Array.from(onlineUsers)}`); // 紀錄在線用戶列表
 
     // 向所有客戶廣播有新用戶連接
     io.emit('user_connected', socket.userId);
@@ -69,13 +69,13 @@ io.on('connection', (socket) => {
     // 監聽客戶端發送的 'addRoom' 事件
     socket.on('addRoom', (roomName) => {
         socket.join(roomName); // 將客戶端添加到指定的房間
-        // console.log(`Client ${socket.userId} joined room: ${roomName}`);
+        logger.info(`Client ${socket.userId} joined room: ${roomName}`);
     });
 
     // 監聽客戶端發送的 'send_message' 事件
     socket.on('send_message', ({ roomName, message }) => {
         /*
-        console.log(
+        logger.info(
             `Get message from room name '${roomName}' msg = ${message.content}`
         );
         console.log(message);

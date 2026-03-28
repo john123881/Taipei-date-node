@@ -1,4 +1,5 @@
 import { sendError } from '../utils/response-handler.js';
+import logger from '../utils/logger.js';
 
 /**
  * 404 處理器
@@ -11,7 +12,7 @@ export const notFoundHandler = (req, res) => {
  * 全域錯誤處理器 (Global Error Handler)
  */
 export const globalErrorHandler = (err, req, res, next) => {
-    console.error('[Global Error Handler]:', err);
+    logger.error('[Global Error Handler]', err);
     
     // Zod 驗證錯誤處理
     if (err.name === 'ZodError') {

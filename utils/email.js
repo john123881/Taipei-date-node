@@ -1,6 +1,7 @@
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
-import chalk from 'chalk';
+import logger from './logger.js';
+
 // 指定要加載的 dotenv 檔案名稱
 const { SMTP_TO_EMAIL, SMTP_TO_PASSWORD } = process.env;
 
@@ -18,19 +19,9 @@ const transporter = nodemailer.createTransport({
 // 驗証連線設定
 transporter.verify((error, success) => {
     if (error) {
-        // 發生錯誤
-        console.error(
-            chalk.red.bgWhite.bold(
-                'ERROR - 無法連線至SMTP伺服器 Unable to connect to the SMTP server.'
-            )
-        );
+        logger.error('SMTP server connection failed', error);
     } else {
-        // 代表成功
-        console.log(
-            chalk.blue.bgWhite.bold(
-                'INFO - SMTP伺服器已連線 SMTP server connected.'
-            )
-        );
+        logger.info('SMTP server connected');
     }
 });
 

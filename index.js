@@ -73,10 +73,9 @@ initSocket(server);
 
 server.listen(port, '0.0.0.0', () => {
     const mode = process.env.NODE_ENV || 'production';
-    console.log(`[${mode.toUpperCase()}] Server Started at http://localhost:${port}`);
+    logger.info(`[${mode.toUpperCase()}] Server Started at http://localhost:${port}`);
 });
 
 // --- 錯誤處理 (必須放在所有路由之後) ---
 app.use(notFoundHandler);    // 404
 app.use(globalErrorHandler); // 全域錯誤處理
-

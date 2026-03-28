@@ -1,5 +1,6 @@
 import { generateToken } from './otp.js';
 import prisma from './prisma-client.js';
+import logger from './logger.js';
 
 // 判斷是否可以重設token, true代表可以重設
 const shouldReset = (expTimestamp, exp, limit = 60) => {
@@ -16,7 +17,7 @@ const createOtpForRegister = async (email, exp = 30, limit = 60) => {
 
     // 找到記錄，因為在60s(秒)內限制，所以"不能"產生新的otp token
     if (otpRecord && !shouldReset(otpRecord.exp_timestamp, exp, limit)) {
-        console.log('ERROR - 60s(秒)內要求重新產生otp');
+        logger.warn(`OTP rate limit hit for ${email}: 60s(秒)內要求重新產生otp`);
         return {};
     }
 

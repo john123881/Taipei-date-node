@@ -66,13 +66,13 @@ export const initSocket = (server) => {
             socket.username = decodedToken.username;
             return next();
         } catch (ex) {
-            console.log('Socket Auth Error:', ex.message);
+            logger.error('Socket Auth Error:', ex.message);
             return next(new Error('Invalid token'));
         }
     });
 
     io.on('connection', (socket) => {
-        console.log(`Socket connected: ${socket.userId} (${socket.username})`);
+        logger.info(`Socket connected: ${socket.userId} (${socket.username})`);
         
         // 註冊用戶到在線列表 (包含 username 以利通知尋送)
         addNewUser(socket.username, socket.userId, socket.id);
@@ -82,7 +82,7 @@ export const initSocket = (server) => {
         // --- 聊天模組 (Chat) ---
         socket.on('addRoom', (roomName) => {
             socket.join(roomName);
-            console.log(`User ${socket.userId} joined room: ${roomName}`);
+            logger.info(`User ${socket.userId} joined room: ${roomName}`);
         });
 
         socket.on('send_message', ({ roomName, message }) => {
