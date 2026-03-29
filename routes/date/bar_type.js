@@ -2,10 +2,12 @@ import express from 'express';
 import { getBarTypes } from '../../services/index.js';
 import { sendSuccess, sendError } from '../../utils/response-handler.js';
 
+import { date } from '../apiConfig.js';
+
 const router = express.Router();
 
 // 拿取 Bar Type
-router.get('/bar_type/api', async (req, res) => {
+router.get(date.getBarType, async (req, res) => {
     try {
         const page = +req.query.page || 1;
         const result = await getBarTypes(page);

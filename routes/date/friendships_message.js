@@ -7,11 +7,13 @@ import {
 } from '../../services/index.js';
 import authenticate from '../../middlewares/authenticate.js';
 import { sendSuccess, sendError } from '../../utils/response-handler.js';
+import uploadAWS from '../../utils/upload-aws-imgs.js';
+import { date } from '../apiConfig.js';
 
 const router = express.Router();
 
 // 拿取資料庫資料 (分頁)
-router.get('/friendships_message/api', async (req, res) => {
+router.get(date.getFriendshipsMessages, async (req, res) => {
     try {
         const page = +req.query.page || 1;
         const result = await getFriendshipsMessages(page);
@@ -30,7 +32,7 @@ router.get('/friendships_message/api', async (req, res) => {
 });
 
 // 取得單筆資料 API (依照 friendship_id)
-router.get('/friendships_message/:friendship_id', authenticate, async (req, res) => {
+router.get(date.getMessagesByFriendshipId, authenticate, async (req, res) => {
     try {
         if (!req.my_jwt?.id) {
             return sendError(res, '沒授權Token', 401);
@@ -44,7 +46,7 @@ router.get('/friendships_message/:friendship_id', authenticate, async (req, res)
 });
 
 // 新增一筆紀錄
-router.post('/friendships_message/api', async (req, res) => {
+router.post(date.createMessage, async (req, res) => {
     try {
         const { friendship_id, sender_id, content } = req.body;
         if (!friendship_id || !sender_id || !content) {
@@ -59,7 +61,7 @@ router.post('/friendships_message/api', async (req, res) => {
 });
 
 // 針對登入使用者，找出朋友的最新一筆的訊息
-router.get('/friendships_message/sender_id/:user_id', authenticate, async (req, res) => {
+router.get(date.getLatestMessages, authenticate, async (req, res) => {
     try {
         if (!req.my_jwt?.id) {
             return sendError(res, '沒授權Token', 401);
@@ -72,11 +74,9 @@ router.get('/friendships_message/sender_id/:user_id', authenticate, async (req, 
     }
 });
 
-import { uploadAWS } from '../../utils/upload-aws-imgs.js';
-
 // 聊天室上傳圖片 API
 // URL: /date/friendships_message/uploadimg/api
-router.post('/friendships_message/uploadimg/api', uploadAWS.single('file'), async (req, res) => {
+router.post(date.uploadImg, uploadAWS.single('file'), async (req, res) => {
     try {
         if (!req.file) {
             return sendError(res, '沒有上傳圖片', 400);

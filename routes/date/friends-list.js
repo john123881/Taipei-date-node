@@ -10,10 +10,12 @@ import {
 import authenticate from '../../middlewares/authenticate.js';
 import { sendSuccess, sendError } from '../../utils/response-handler.js';
 
+import { date } from '../apiConfig.js';
+
 const router = express.Router();
 
 // 拿取資料庫資料 (分頁)
-router.get('/friends-list/api', async (req, res) => {
+router.get(date.getFriendsList, async (req, res) => {
     try {
         const page = +req.query.page || 1;
         const result = await getFriendList(page);
@@ -32,7 +34,7 @@ router.get('/friends-list/api', async (req, res) => {
 });
 
 // 取得單筆資料 API
-router.get('/friends-list/:friendship_id', authenticate, async (req, res) => {
+router.get(date.getFriendshipById, authenticate, async (req, res) => {
     try {
         if (!req.my_jwt?.id) {
             return sendError(res, '沒授權Token', 401);
@@ -50,7 +52,7 @@ router.get('/friends-list/:friendship_id', authenticate, async (req, res) => {
 });
 
 // 新增一個好友請求
-router.post('/friends-list/', authenticate, async (req, res) => {
+router.post(date.createFriendship, authenticate, async (req, res) => {
     try {
         if (!req.my_jwt?.id) {
             return sendError(res, '沒授權Token', 401);
@@ -71,7 +73,7 @@ router.post('/friends-list/', authenticate, async (req, res) => {
 });
 
 // 修改好友狀態 (接受/拒絕)
-router.put('/friends-list/edit/:friendship_id', async (req, res) => {
+router.put(date.updateFriendshipStatus, async (req, res) => {
     try {
         const { friendship_id } = req.params;
         const { friendship_status } = req.body;
@@ -87,7 +89,7 @@ router.put('/friends-list/edit/:friendship_id', async (req, res) => {
 });
 
 // 取得使用者的好友且狀態要是 accepted
-router.get('/friends-list/accepted/:user_id', authenticate, async (req, res) => {
+router.get(date.getAcceptedFriends, authenticate, async (req, res) => {
     try {
         if (!req.my_jwt?.id) {
             return sendError(res, '沒授權Token', 401);
@@ -101,7 +103,7 @@ router.get('/friends-list/accepted/:user_id', authenticate, async (req, res) => 
 });
 
 // 取得推薦好友 (基於興趣)
-router.get('/friends-list/:user_id/:bar_type_id/:movie_type_id', authenticate, async (req, res) => {
+router.get(date.getRecommendedFriends, authenticate, async (req, res) => {
     try {
         if (!req.my_jwt?.id) {
             return sendError(res, '沒授權Token', 401);

@@ -140,4 +140,22 @@ const account = {
     collectList: '/collect-list/:sid',
 };
 
-export { community, trip, bar, booking, account };
+const date = {
+    getBarType: '/bar_type/api',
+    getBookingMovieType: '/booking_movie_type/api',
+    getFriendsList: '/friends-list/api',
+    getFriendshipById: '/friends-list/:friendship_id',
+    createFriendship: '/friends-list/',
+    updateFriendshipStatus: '/friends-list/edit/:friendship_id',
+    getAcceptedFriends: '/friends-list/accepted/:user_id',
+    getRecommendedFriends: '/friends-list/:user_id/:bar_type_id/:movie_type_id',
+    getFriendshipsMessages: '/friendships_message/api',
+    getMessagesByFriendshipId: '/friendships_message/:friendship_id',
+    createMessage: '/friendships_message/api',
+    getLatestMessages: '/friendships_message/sender_id/:user_id',
+    uploadImg: '/friendships_message/uploadimg/api',
+    editUserBarType: '/user_interest/edit_bar_type/:user_id',
+    editUserMovieType: '/user_interest/edit_movie_type/:user_id',
+};
+
+export { community, trip, bar, booking, account, date };

@@ -2,10 +2,12 @@ import express from 'express';
 import { getMovieTypes } from '../../services/index.js';
 import { sendSuccess, sendError } from '../../utils/response-handler.js';
 
+import { date } from '../apiConfig.js';
+
 const router = express.Router();
 
 // 拿取 Movie Type
-router.get('/booking_movie_type/api', async (req, res) => {
+router.get(date.getBookingMovieType, async (req, res) => {
     try {
         const page = +req.query.page || 1;
         const result = await getMovieTypes(page);

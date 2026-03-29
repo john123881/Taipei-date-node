@@ -2,11 +2,12 @@ import express from 'express';
 import { updateUserBarType, updateUserMovieType } from '../../services/index.js';
 import authenticate from '../../middlewares/authenticate.js';
 import { sendSuccess, sendError } from '../../utils/response-handler.js';
+import { date } from '../apiConfig.js';
 
 const router = express.Router();
 
 // 更改使用者喜愛的Bar類型
-router.put('/user_interest/edit_bar_type/:user_id', authenticate, async (req, res) => {
+router.put(date.editUserBarType, authenticate, async (req, res) => {
     try {
         if (!req.my_jwt?.id) {
             return sendError(res, '沒授權Token', 401);
@@ -22,7 +23,7 @@ router.put('/user_interest/edit_bar_type/:user_id', authenticate, async (req, re
 });
 
 // 更改使用者喜愛的Movie類型
-router.put('/user_interest/edit_movie_type/:user_id', authenticate, async (req, res) => {
+router.put(date.editUserMovieType, authenticate, async (req, res) => {
     try {
         if (!req.my_jwt?.id) {
             return sendError(res, '沒授權Token', 401);
