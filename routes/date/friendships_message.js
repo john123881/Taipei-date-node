@@ -88,7 +88,7 @@ router.post(
         if (!req.file) {
             return sendError(res, '沒有上傳圖片', 400);
         }
-        sendSuccess(res, { location: req.file.location }, '圖片上傳成功');
+        sendSuccess(res, { imgUrl: req.file.location }, '圖片上傳成功');
     } catch (error) {
         console.error('Chat image upload error:', error);
         sendError(res, '圖片上傳失敗', 500, error);

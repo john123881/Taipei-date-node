@@ -41,13 +41,20 @@ barSavedRouter.delete(bar.unsavedBar, authenticate, async (req, res) => {
 });
 
 // 判斷是否收藏
-barSavedRouter.get(bar.checkBarStatus, async (req, res) => {
+barSavedRouter.post(bar.checkBarStatus, async (req, res) => {
     try {
-        const { userId, barIds } = req.query;
+        const { userId, barIds } = req.body;
         if (!userId || !barIds) {
             return sendError(res, '需要提供 userId 和 barIds', 400);
         }
-        const barIdArray = barIds.split(',').map((id) => parseInt(id.trim()));
+        
+        let barIdArray = [];
+        if (Array.isArray(barIds)) {
+            barIdArray = barIds.map(id => parseInt(id));
+        } else {
+            barIdArray = barIds.split(',').map((id) => parseInt(id.trim()));
+        }
+
         const results = await checkBarStatus(userId, barIdArray);
         sendSuccess(res, results);
     } catch (error) {

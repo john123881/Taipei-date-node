@@ -63,13 +63,20 @@ movieListrouter.delete(booking.unsaveMovie, async (req, res) => {
     }
 });
 
-movieListrouter.get(booking.checkMovieStatus, async (req, res) => {
+movieListrouter.post(booking.checkMovieStatus, async (req, res) => {
     try {
-        const { userId, movieIds } = req.query;
+        const { userId, movieIds } = req.body;
         if (!userId || !movieIds) {
             return sendError(res, '需要提供 userId 和 movieIds', 400);
         }
-        const movieIdArray = movieIds.split(',').map((id) => id.trim());
+
+        let movieIdArray = [];
+        if (Array.isArray(movieIds)) {
+            movieIdArray = movieIds.map(id => id.toString().trim());
+        } else {
+            movieIdArray = movieIds.split(',').map((id) => id.trim());
+        }
+
         const results = await checkMovieStatus(userId, movieIdArray);
         sendSuccess(res, results);
     } catch (error) {
