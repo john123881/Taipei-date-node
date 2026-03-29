@@ -22,8 +22,9 @@ export const getProfile = async (sid) => {
     const totalPointsDec = user.booking_points_dec.reduce((sum, item) => sum + item.points_decrease, 0);
     const total_points = totalPointsInc - totalPointsDec;
 
+    const { password_hash, ...userWithoutPassword } = user;
     return {
-        ...user,
+        ...userWithoutPassword,
         bar_type_name: user.bar_type?.bar_type_name || null,
         movie_type: user.movie_type?.movie_type || null,
         total_points: total_points,

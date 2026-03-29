@@ -72,4 +72,20 @@ router.get('/friendships_message/sender_id/:user_id', authenticate, async (req, 
     }
 });
 
+import { uploadAWS } from '../../utils/upload-aws-imgs.js';
+
+// 聊天室上傳圖片 API
+// URL: /date/friendships_message/uploadimg/api
+router.post('/friendships_message/uploadimg/api', uploadAWS.single('file'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return sendError(res, '沒有上傳圖片', 400);
+        }
+        sendSuccess(res, { imgUrl: req.file.location }, '圖片上傳成功');
+    } catch (error) {
+        console.error('Chat image upload error:', error);
+        sendError(res, '圖片上傳失敗', 500, error);
+    }
+});
+
 export default router;

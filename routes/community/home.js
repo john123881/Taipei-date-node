@@ -33,6 +33,7 @@ router.get(community.getPostsByKeyword, async (req, res) => {
         const results = await getPostsByKeyword(keyword, page, limit);
         sendSuccess(res, results);
     } catch (error) {
+        console.error('getPostsByKeyword error:', error);
         sendError(res, '伺服器錯誤', 500, error);
     }
 });
@@ -44,6 +45,7 @@ router.get(community.getPosts, async (req, res) => {
         const results = await getPosts(page, limit);
         sendSuccess(res, results);
     } catch (error) {
+        console.error('getPosts error:', error);
         sendError(res, '伺服器錯誤', 500, error);
     }
 });
@@ -58,6 +60,7 @@ router.get(community.getComments, async (req, res) => {
         const results = await getComments(postIdArray);
         sendSuccess(res, results);
     } catch (error) {
+        console.error('getComments error:', error);
         sendError(res, '伺服器錯誤', 500, error);
     }
 });
@@ -67,6 +70,7 @@ router.get(community.getSuggestUsers, async (req, res) => {
         const results = await getSuggestUsers();
         sendSuccess(res, results);
     } catch (error) {
+        console.error('getSuggestUsers error:', error);
         sendError(res, '伺服器錯誤', 500, error);
     }
 });
@@ -82,6 +86,7 @@ router.post(community.savePost, authenticate, async (req, res) => {
         const results = await savePost(postId, userId);
         sendSuccess(res, results, '收藏貼文成功');
     } catch (err) {
+        console.error('savePost error:', err);
         sendError(res, '收藏貼文失敗', 500, err);
     }
 });
@@ -97,6 +102,7 @@ router.delete(community.unsavePost, authenticate, async (req, res) => {
         const results = await unsavePost(postId, userId);
         sendSuccess(res, results, '移除收藏貼文成功');
     } catch (err) {
+        console.error('unsavePost error:', err);
         sendError(res, '移除收藏貼文失敗', 500, err);
     }
 });
@@ -112,6 +118,7 @@ router.post(community.likePost, authenticate, async (req, res) => {
         const results = await likePost(postId, userId);
         sendSuccess(res, results, '喜愛貼文成功');
     } catch (err) {
+        console.error('likePost error:', err);
         sendError(res, '喜愛貼文失敗', 500, err);
     }
 });
@@ -127,6 +134,7 @@ router.delete(community.unlikePost, authenticate, async (req, res) => {
         const results = await unlikePost(postId, userId);
         sendSuccess(res, results, '移除喜愛貼文成功');
     } catch (err) {
+        console.error('unlikePost error:', err);
         sendError(res, '移除喜愛貼文失敗', 500, err);
     }
 });
@@ -141,6 +149,7 @@ router.get(community.checkPostStatus, async (req, res) => {
         const results = await checkPostStatus(userId, postIdArray);
         sendSuccess(res, results);
     } catch (error) {
+        console.error('checkPostStatus error:', error);
         sendError(res, '伺服器錯誤', 500, error);
     }
 });
