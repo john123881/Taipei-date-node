@@ -11,6 +11,7 @@ export const getEventPage = async (eventId) => {
                 select: {
                     photo_name: true,
                     img: true,
+                    img_url: true,
                 },
             },
         },
@@ -22,9 +23,11 @@ export const getEventPage = async (eventId) => {
     const endDateFormat = 'YYYY[年] MM[月]DD[日]';
 
     const photo = event.comm_events_photo[0];
-    let imgBase64 = null;
-    if (photo && photo.img) {
-        imgBase64 = `data:image/jpeg;base64,${Buffer.from(photo.img).toString('base64')}`;
+    let imgSource = null;
+    if (photo && photo.img_url) {
+        imgSource = photo.img_url;
+    } else if (photo && photo.img) {
+        imgSource = `data:image/jpeg;base64,${Buffer.from(photo.img).toString('base64')}`;
     }
 
     return [{
@@ -34,6 +37,6 @@ export const getEventPage = async (eventId) => {
         end_date: dayjs(event.end_date).format(endDateFormat),
         end_time: event.end_time ? dayjs(event.end_time).format('HH:mm') : null,
         photo_name: photo?.photo_name,
-        img: imgBase64,
+        img: imgSource,
     }];
 };

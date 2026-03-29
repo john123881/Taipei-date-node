@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
+  provider     = "mysql"
+  url          = env("DATABASE_URL")
+  relationMode = "prisma"
 }
 
 model admin_user {
@@ -15,6 +16,7 @@ model admin_user {
   admin_permission    Int     @default(1) @db.TinyInt
   google_avatar_url   String? @default("") @db.VarChar(255)
   avatar_img          Bytes?  @db.MediumBlob
+  avatar_url          String? @db.VarChar(512)
 }
 
 model bar_area {
@@ -45,6 +47,7 @@ model bar_pic {
   bar_pic_name String @db.VarChar(255)
   bar_id       Int
   bar_img      Bytes? @db.MediumBlob
+  bar_img_url  String? @db.VarChar(512)
   bars         bars   @relation(fields: [bar_id], references: [bar_id], onDelete: Cascade, map: "bar_pic_ibfk_1")
 
   @@index([bar_id], map: "bar_pic_ibfk_1")
@@ -137,6 +140,7 @@ model booking_movie {
   movie_rating       Float              @db.Float
   movie_type_id      Int
   movie_img          Bytes?             @db.MediumBlob
+  movie_img_url      String?            @db.VarChar(512)
   youtube_id         String?            @db.VarChar(255)
   booking_movie_type booking_movie_type @relation(fields: [movie_type_id], references: [movie_type_id], onDelete: NoAction, onUpdate: NoAction, map: "movie_type_id")
   trip_details       trip_details[]
@@ -247,6 +251,7 @@ model comm_events_photo {
   photo_name           String      @db.VarChar(255)
   comm_event_id        Int
   img                  Bytes       @db.MediumBlob
+  img_url              String?     @db.VarChar(512)
   comm_events          comm_events @relation(fields: [comm_event_id], references: [comm_event_id], onDelete: Cascade, map: "comm_events_photo_ibfk_1")
 
   @@index([comm_event_id], map: "comm_event_id")
@@ -310,6 +315,7 @@ model comm_photo {
   photo_name    String    @db.VarChar(255)
   post_id       Int
   img           Bytes     @db.MediumBlob
+  img_url       String?   @db.VarChar(512)
   comm_post     comm_post @relation(fields: [post_id], references: [post_id], onDelete: Cascade, map: "comm_photo_ibfk_1")
 
   @@index([post_id], map: "comm_photo_ibfk_1")

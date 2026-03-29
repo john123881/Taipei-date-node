@@ -6,7 +6,11 @@ export const getMyBarPhoto = async (trip_plan_id) => {
             trip_plan_id: Number(trip_plan_id),
         },
         include: {
-            bar_pic: true,
+            bars: {
+                include: {
+                    bar_pic: true,
+                },
+            },
         },
     });
 };

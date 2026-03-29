@@ -17,6 +17,7 @@ export const getPostPage = async (postId) => {
                 select: {
                     photo_name: true,
                     img: true,
+                    img_url: true,
                 },
             },
         },
@@ -25,9 +26,11 @@ export const getPostPage = async (postId) => {
     if (!post) return [];
 
     const photo = post.comm_photo[0];
-    let imgBase64 = null;
-    if (photo && photo.img) {
-        imgBase64 = `data:image/jpeg;base64,${Buffer.from(photo.img).toString('base64')}`;
+    let imgSource = null;
+    if (photo && photo.img_url) {
+        imgSource = photo.img_url;
+    } else if (photo && photo.img) {
+        imgSource = `data:image/jpeg;base64,${Buffer.from(photo.img).toString('base64')}`;
     }
 
     return [{
@@ -40,6 +43,6 @@ export const getPostPage = async (postId) => {
         username: post.member_user?.username,
         avatar: post.member_user?.avatar,
         photo_name: photo?.photo_name,
-        img: imgBase64,
+        img: imgSource,
     }];
 };
