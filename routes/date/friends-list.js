@@ -56,13 +56,16 @@ router.post('/friends-list/', authenticate, async (req, res) => {
             return sendError(res, '沒授權Token', 401);
         }
         const { user_id1, user_id2, friendship_status } = req.body;
-        if (!user_id1 || !user_id2) {
-            return sendError(res, '缺少必要欄位', 400);
+        if (!user_id1 || !user_id2 || user_id2 === 'null' || user_id2 === 'undefined') {
+            return sendError(res, '缺少必要欄位 (無效的用戶ID)', 400);
         }
 
         const result = await createFriendship(user_id1, user_id2, friendship_status);
         sendSuccess(res, result, '好友請求已發送');
     } catch (error) {
+        if (error.message === 'Friendship already exists') {
+            return sendError(res, '好友請求已存在或你們已是好友', 409);
+        }
         sendError(res, '伺服器錯誤', 500, error);
     }
 });

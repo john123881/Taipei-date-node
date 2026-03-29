@@ -3,7 +3,7 @@ import express from 'express';
 import barListRouter from './bar-list.js';
 import barListTypeRouter from './bar-list-type.js';
 import barListAreaRouter from './bar-list-area.js';
-import barListRadomRouter from './bar-list-radom.js';
+import barListRandomRouter from './bar-list-random.js';
 import barListAuthRouter from './bar-list(add-auth).js';
 import barListSportRouter from './barType/bar-list-sport.js';
 import barListMusicRouter from './barType/bar-list-music.js';
@@ -27,7 +27,7 @@ barRouter.use('/',
     barListRouter,
     barListTypeRouter,
     barListAreaRouter,
-    barListRadomRouter,
+    barListRandomRouter,
     barListAuthRouter,
     barListSportRouter,
     barListMusicRouter,
