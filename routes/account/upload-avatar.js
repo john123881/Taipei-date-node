@@ -6,7 +6,14 @@ import { sendSuccess, sendError } from '../../utils/response-handler.js';
 
 const uploadAvatarRouter = express.Router();
 
-uploadAvatarRouter.post(account.uploadAvatar, uploadAws.single('avatar'), async (req, res) => {
+uploadAvatarRouter.post(
+    account.uploadAvatar,
+    (req, res, next) => {
+        req.uploadFolder = 'avatars';
+        next();
+    },
+    uploadAws.single('avatar'),
+    async (req, res) => {
     try {
         if (!req.file) {
             return sendError(res, '請選擇檔案', 400);

@@ -57,7 +57,8 @@ const upload = multer({
         bucket: AWS_BUCKET_NAME,
         contentType: multerS3.AUTO_CONTENT_TYPE,
         key: function (req, file, callback) {
-            callback(null, Date.now() + path.extname(file.originalname));
+            const folder = req.uploadFolder ? `${req.uploadFolder}/` : '';
+            callback(null, folder + Date.now() + path.extname(file.originalname));
         },
     }),
 });

@@ -63,7 +63,8 @@ router.post(date.createFriendship, authenticate, async (req, res) => {
         }
 
         const result = await createFriendship(user_id1, user_id2, friendship_status);
-        sendSuccess(res, result, '好友請求已發送');
+        const successMsg = friendship_status === 'rejected' ? '已跳過此對象' : '好友請求已發送';
+        sendSuccess(res, result, successMsg);
     } catch (error) {
         if (error.message === 'Friendship already exists') {
             return sendError(res, '好友請求已存在或你們已是好友', 409);

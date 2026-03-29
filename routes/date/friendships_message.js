@@ -76,12 +76,19 @@ router.get(date.getLatestMessages, authenticate, async (req, res) => {
 
 // 聊天室上傳圖片 API
 // URL: /date/friendships_message/uploadimg/api
-router.post(date.uploadImg, uploadAWS.single('file'), async (req, res) => {
+router.post(
+    date.uploadImg,
+    (req, res, next) => {
+        req.uploadFolder = 'chat';
+        next();
+    },
+    uploadAWS.single('file'),
+    async (req, res) => {
     try {
         if (!req.file) {
             return sendError(res, '沒有上傳圖片', 400);
         }
-        sendSuccess(res, { imgUrl: req.file.location }, '圖片上傳成功');
+        sendSuccess(res, { location: req.file.location }, '圖片上傳成功');
     } catch (error) {
         console.error('Chat image upload error:', error);
         sendError(res, '圖片上傳失敗', 500, error);
