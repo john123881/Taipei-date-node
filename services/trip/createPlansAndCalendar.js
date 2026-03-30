@@ -41,6 +41,6 @@ export const createPlansAndCalendar = async (
         };
     } catch (error) {
         console.error('Error creating trip plans and calendar:', error);
-        return { success: false, error: '新增資料到資料庫時出錯' };
+        throw error;
     }
 };
