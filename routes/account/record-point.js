@@ -28,7 +28,7 @@ recordPointRouter.get(account.recordPoint, authenticate, async (req, res) => {
             source: req.query.selectedValue || '',
             date_begin: req.query.date_begin || '',
             date_end: req.query.date_end || '',
-            sortOrder: req.query.sortDate
+            sortOrder: req.query.sortOrder || req.query.sortDate
         });
 
         if (page < 1 || (totalPages > 0 && page > totalPages)) {

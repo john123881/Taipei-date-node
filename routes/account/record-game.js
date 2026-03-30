@@ -17,7 +17,7 @@ recordGameRouter.get(account.recordGame, authenticate, async (req, res) => {
             return sendError(res, 'UserID不匹配', 403);
         }
 
-        const sid = req.my_jwt?.id || 0;
+        const sid = parseInt(req.my_jwt?.id) || 0;
         const page = parseInt(req.query.page) || 1;
         const perPage = 10;
 
@@ -27,8 +27,8 @@ recordGameRouter.get(account.recordGame, authenticate, async (req, res) => {
             perPage,
             date_begin: req.query.date_begin || '',
             date_end: req.query.date_end || '',
-            sortField: req.query.sortField,
-            sortDirection: req.query.sortDirection
+            sortField: req.query.sortKey,
+            sortDirection: req.query.sortOrder
         });
 
         if (page < 1 || (totalPages > 0 && page > totalPages)) {
@@ -44,6 +44,8 @@ recordGameRouter.get(account.recordGame, authenticate, async (req, res) => {
             page,
             totalPages,
             perPage,
+            sortKey: req.query.sortKey,
+            sortOrder: req.query.sortOrder
         });
 
     } catch (error) {

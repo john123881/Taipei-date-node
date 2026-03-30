@@ -15,9 +15,30 @@ export const getGameRecords = async ({ sid, page, perPage, date_begin, date_end,
     if (totalRows === 0) return { totalRows, data: [] };
 
     const totalPages = Math.ceil(totalRows / perPage);
+
+    // 顯式映射排序欄位，確保安全與準確性
+    const allowedFields = ['created_at', 'game_score', 'game_time'];
+    const field = allowedFields.includes(sortField) ? sortField : 'created_at';
+    const direction = sortDirection?.toUpperCase() === 'ASC' ? 'asc' : 'desc';
+
+    // 使用顯式語法避免 Prisma 動態鍵相容性問題
+    let orderBy = {};
+    switch(field) {
+        case 'game_score':
+            orderBy = { game_score: direction };
+            break;
+        case 'game_time':
+            orderBy = { game_time: direction };
+            break;
+        case 'created_at':
+        default:
+            orderBy = { created_at: direction };
+            break;
+    }
+
     const rows = await prisma.member_game_record.findMany({
         where: whereClause,
-        orderBy: { [sortField || 'created_at']: sortDirection === 'ASC' ? 'asc' : 'desc' },
+        orderBy,
         skip: (page - 1) * perPage,
         take: perPage
     });
