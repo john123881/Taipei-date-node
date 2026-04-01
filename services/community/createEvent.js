@@ -1,5 +1,6 @@
 import prisma from '../../utils/prisma-client.js';
 import dayjs from 'dayjs';
+import { EVENT_STATUS } from '../../config/community-info.js';
 
 export const createEvent = async (
     title,
@@ -12,11 +13,14 @@ export const createEvent = async (
     endDate,
     endTime
 ) => {
+    // Handle status mapping: use provided status or default to OPEN
+    const eventStatus = status ? String(status) : EVENT_STATUS.OPEN;
+
     const newEvent = await prisma.comm_events.create({
         data: {
             title,
             description,
-            status: Number(status),
+            status: eventStatus,
             location,
             user_id: Number(userId),
             start_date: new Date(startDate),
