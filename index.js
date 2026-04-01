@@ -16,6 +16,9 @@ import logger from './utils/logger.js';
 
 // 路由
 import {
+    communityRouter,
+    tripRouter,
+    barRouter,
     bookingRouter,
     accountRouter,
     authRouter,
