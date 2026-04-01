@@ -25,6 +25,7 @@ export const getPostsByKeyword = async (keyword, page = 1, limit = 12) => {
                 select: {
                     photo_name: true,
                     img: true,
+                    img_url: true,
                 },
             },
         },
@@ -32,9 +33,11 @@ export const getPostsByKeyword = async (keyword, page = 1, limit = 12) => {
 
     return results.map((post) => {
         const photo = post.comm_photo[0];
-        let imgBase64 = null;
-        if (photo && photo.img) {
-            imgBase64 = `data:image/jpeg;base64,${Buffer.from(photo.img).toString('base64')}`;
+        let imgSource = null;
+        if (photo && photo.img_url) {
+            imgSource = photo.img_url;
+        } else if (photo && photo.img) {
+            imgSource = `data:image/jpeg;base64,${Buffer.from(photo.img).toString('base64')}`;
         }
 
         return {

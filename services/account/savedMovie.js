@@ -23,7 +23,9 @@ export const getSavedMovies = async (sid, page, perPage) => {
             select: { email: true, username: true }
         });
         let imgData = null;
-        if (movie?.movie_img) {
+        if (movie?.movie_img_url) {
+            imgData = movie.movie_img_url;
+        } else if (movie?.movie_img) {
             imgData = `data:image/jpeg;base64,${Buffer.from(movie.movie_img).toString('base64')}`;
         }
         formattedData.push({

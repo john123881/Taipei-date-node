@@ -10,13 +10,16 @@ export const searchMovies = async (searchTerm) => {
     });
 
     return results.map((pic) => {
-        if (pic.movie_img) {
-            const imageBase64 = Buffer.from(pic.movie_img).toString('base64');
-            return {
-                ...pic,
-                movie_img: `data:image/jpeg;base64,${imageBase64}`,
-            };
+        let imgSource = null;
+        if (pic.movie_img_url) {
+            imgSource = pic.movie_img_url;
+        } else if (pic.movie_img) {
+            imgSource = `data:image/jpeg;base64,${Buffer.from(pic.movie_img).toString('base64')}`;
         }
-        return pic;
+
+        return {
+            ...pic,
+            movie_img: imgSource,
+        };
     });
 };

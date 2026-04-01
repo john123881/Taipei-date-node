@@ -1,13 +1,19 @@
 import prisma from '../../utils/prisma-client.js';
+import { uploadToS3 } from '../../utils/s3-core.js';
 
 export const editPostPhoto = async (photoName, imageData, postId) => {
+    // 1. 上傳到 S3
+    const s3Url = await uploadToS3(imageData, photoName, 'posts');
+
+    // 2. 更新資料庫
     await prisma.comm_photo.updateMany({
         where: {
             post_id: Number(postId),
         },
         data: {
             photo_name: photoName,
-            img: imageData,
+            img: Buffer.alloc(0),
+            img_url: s3Url,
         },
     });
 
@@ -27,6 +33,7 @@ export const editPostPhoto = async (photoName, imageData, postId) => {
                 select: {
                     photo_name: true,
                     img: true,
+                    img_url: true,
                 },
             },
         },
@@ -34,9 +41,11 @@ export const editPostPhoto = async (photoName, imageData, postId) => {
 
     if (post) {
         const photo = post.comm_photo[0];
-        let imgBase64 = null;
-        if (photo && photo.img) {
-            imgBase64 = `data:image/jpeg;base64,${Buffer.from(photo.img).toString('base64')}`;
+        let imgSource = null;
+        if (photo && photo.img_url) {
+            imgSource = photo.img_url;
+        } else if (photo && photo.img) {
+            imgSource = `data:image/jpeg;base64,${Buffer.from(photo.img).toString('base64')}`;
         }
 
         return {

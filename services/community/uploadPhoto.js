@@ -1,11 +1,17 @@
 import prisma from '../../utils/prisma-client.js';
+import { uploadToS3 } from '../../utils/s3-core.js';
 
 export const uploadPhoto = async (photoName, postId, imageData) => {
+    // 1. 上傳到 S3
+    const s3Url = await uploadToS3(imageData, photoName, 'posts');
+
+    // 2. 存入資料庫 (儲存 URL)
     await prisma.comm_photo.create({
         data: {
             photo_name: photoName,
             post_id: Number(postId),
-            img: imageData,
+            img: Buffer.alloc(0), // 不再儲存原始資料，節省空間
+            img_url: s3Url,
         },
     });
 

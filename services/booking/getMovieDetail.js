@@ -14,13 +14,16 @@ export const getMovieDetail = async (movieId) => {
             movie_type_id: true,
             youtube_id: true,
             movie_img: true,
+            movie_img_url: true,
         },
     });
 
     if (!movie) return [];
 
     let result = { ...movie };
-    if (movie.movie_img) {
+    if (movie.movie_img_url) {
+        result.movie_img = movie.movie_img_url;
+    } else if (movie.movie_img) {
         const imageBase64 = Buffer.from(movie.movie_img).toString('base64');
         result.movie_img = `data:image/jpeg;base64,${imageBase64}`;
     }

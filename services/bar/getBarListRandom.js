@@ -9,7 +9,8 @@ export const getBarListRandom = async () => {
             bt.bar_type_name,
             bp.bar_pic_id,
             bp.bar_pic_name,
-            bp.bar_img
+            bp.bar_img,
+            bp.bar_img_url
         FROM 
             bars b
         LEFT JOIN 
@@ -25,15 +26,17 @@ export const getBarListRandom = async () => {
 
     // 將 BLOB 數據轉換為 Base64 字符串
     const pics = results.map((pic) => {
-        if (pic.bar_img) {
-            const imageBase64 = Buffer.from(pic.bar_img).toString('base64');
-
-            return {
-                ...pic,
-                bar_img: `data:image/jpeg;base64,${imageBase64}`,
-            };
+        let imgSource = null;
+        if (pic.bar_img_url) {
+            imgSource = pic.bar_img_url;
+        } else if (pic.bar_img) {
+            imgSource = `data:image/jpeg;base64,${Buffer.from(pic.bar_img).toString('base64')}`;
         }
-        return pic;
+
+        return {
+            ...pic,
+            bar_img: imgSource,
+        };
     });
     return pics;
 };

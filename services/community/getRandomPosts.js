@@ -15,7 +15,8 @@ export const getRandomPosts = async (page = 1, limit = 12) => {
             users.username,
             users.avatar,
             photos.photo_name,
-            photos.img
+            photos.img,
+            photos.img_url
         FROM 
             comm_post AS posts
         LEFT JOIN 
@@ -31,13 +32,16 @@ export const getRandomPosts = async (page = 1, limit = 12) => {
         LIMIT ${Number(limit)} OFFSET ${Number(offset)}`;
 
     return results.map((post) => {
-        if (post.img) {
-            const imageBase64 = Buffer.from(post.img).toString('base64');
-            return {
-                ...post,
-                img: `data:image/jpeg;base64,${imageBase64}`,
-            };
+        let imgSource = null;
+        if (post.img_url) {
+            imgSource = post.img_url;
+        } else if (post.img) {
+            imgSource = `data:image/jpeg;base64,${Buffer.from(post.img).toString('base64')}`;
         }
-        return post;
+
+        return {
+            ...post,
+            img: imgSource,
+        };
     });
 };

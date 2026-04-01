@@ -24,13 +24,10 @@ export const searchUsers = async (searchTerm) => {
     // The original code tried to use 'img'. I'll check first.
     
     return results.map((user) => {
-        if (user.img) {
-            const imageBase64 = Buffer.from(user.img).toString('base64');
-            return {
-                ...user,
-                img: `data:image/jpeg;base64,${imageBase64}`,
-            };
-        }
-        return user;
+        // avatar 已經是 URL 格式，直接返回即可
+        return {
+            ...user,
+            img: user.avatar, // 為保持與前端舊有的 .img 屬性相容
+        };
     });
 };

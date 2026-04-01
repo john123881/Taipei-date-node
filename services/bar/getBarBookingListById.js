@@ -35,7 +35,9 @@ export const getBarBookingListById = async (user_id) => {
             bar_pic_name: firstPic?.bar_pic_name,
         };
 
-        if (firstPic?.bar_img) {
+        if (firstPic?.bar_img_url) {
+            formatted.bar_img = firstPic.bar_img_url;
+        } else if (firstPic?.bar_img) {
             const imageBase64 = Buffer.from(firstPic.bar_img).toString('base64');
             formatted.bar_img = `data:image/jpeg;base64,${imageBase64}`;
         }

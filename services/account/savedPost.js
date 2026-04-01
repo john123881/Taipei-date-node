@@ -14,7 +14,7 @@ export const getSavedPosts = async (sid, page, perPage) => {
             comm_post: {
                 include: {
                     member_user: { select: { user_id: true, email: true, username: true, avatar: true } },
-                    comm_photo: { select: { photo_name: true, img: true }, take: 1 }
+                    comm_photo: { select: { photo_name: true, img: true, img_url: true }, take: 1 }
                 }
             }
         }
@@ -25,7 +25,9 @@ export const getSavedPosts = async (sid, page, perPage) => {
         const author = post?.member_user;
         const photo = post?.comm_photo?.[0];
         let imgData = null;
-        if (photo?.img) {
+        if (photo?.img_url) {
+            imgData = photo.img_url;
+        } else if (photo?.img) {
             imgData = `data:image/jpeg;base64,${Buffer.from(photo.img).toString('base64')}`;
         }
         return {

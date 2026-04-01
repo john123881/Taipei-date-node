@@ -4,7 +4,7 @@ export const getIndexMovieList = async () => {
     // Prisma does not have a native order-by-rand, so we use queryRaw safely
     const results = await prisma.$queryRaw`
         SELECT 
-            movie_id, title, poster_img, movie_description, movie_rating, movie_type_id, movie_img
+            movie_id, title, poster_img, movie_description, movie_rating, movie_type_id, movie_img, movie_img_url
         FROM 
             booking_movie
         ORDER BY RAND()
@@ -12,13 +12,16 @@ export const getIndexMovieList = async () => {
     `;
 
     return results.map((pic) => {
-        if (pic.movie_img) {
-            const imageBase64 = Buffer.from(pic.movie_img).toString('base64');
-            return {
-                ...pic,
-                movie_img: `data:image/jpeg;base64,${imageBase64}`,
-            };
+        let imgSource = null;
+        if (pic.movie_img_url) {
+            imgSource = pic.movie_img_url;
+        } else if (pic.movie_img) {
+            imgSource = `data:image/jpeg;base64,${Buffer.from(pic.movie_img).toString('base64')}`;
         }
-        return pic;
+
+        return {
+            ...pic,
+            movie_img: imgSource,
+        };
     });
 };

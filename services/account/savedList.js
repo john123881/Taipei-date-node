@@ -12,7 +12,7 @@ export const getSavedList = async (sid) => {
             comm_post: {
                 include: {
                     member_user: true,
-                    comm_photo: { select: { img: true, photo_name: true }, take: 1 },
+                    comm_photo: { select: { img: true, photo_name: true, img_url: true }, take: 1 },
                     comm_likes: true
                 }
             }
@@ -27,7 +27,7 @@ export const getSavedList = async (sid) => {
         include: {
             bars: {
                 include: {
-                    bar_pic: { select: { bar_img: true, bar_pic_name: true }, take: 1 }
+                    bar_pic: { select: { bar_img: true, bar_pic_name: true, bar_img_url: true }, take: 1 }
                 }
             }
         }
@@ -61,7 +61,7 @@ export const getSavedList = async (sid) => {
             saved_id: p.comm_saved_id,
             item_id: p.post_id,
             created_at: p.created_at,
-            img: p.comm_post?.comm_photo?.[0]?.img || null,
+            img: p.comm_post?.comm_photo?.[0]?.img_url || p.comm_post?.comm_photo?.[0]?.img || null,
             img_name: p.comm_post?.comm_photo?.[0]?.photo_name || null,
             title: p.comm_post?.member_user?.username || 'Unknown',
             subtitle: p.comm_post?.comm_likes?.length || 0,
@@ -79,7 +79,7 @@ export const getSavedList = async (sid) => {
             saved_id: b.bar_saved_id,
             item_id: b.bar_id,
             created_at: b.created_at,
-            img: b.bars?.bar_pic?.[0]?.bar_img || null,
+            img: b.bars?.bar_pic?.[0]?.bar_img_url || b.bars?.bar_pic?.[0]?.bar_img || null,
             img_name: b.bars?.bar_pic?.[0]?.bar_pic_name || null,
             title: b.bars?.bar_name,
             subtitle: b.bars?.bar_addr,
@@ -97,7 +97,7 @@ export const getSavedList = async (sid) => {
             saved_id: m.booking_movie_saved_id,
             item_id: m.movie_id,
             created_at: m.created_at,
-            img: m.detail?.movie_img || null,
+            img: m.detail?.movie_img_url || m.detail?.movie_img || null,
             img_name: m.detail?.poster_img || null,
             title: m.detail?.title,
             subtitle: m.detail?.booking_movie_type?.movie_type,
@@ -112,7 +112,9 @@ export const getSavedList = async (sid) => {
         .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
         .slice(0, 10)
         .map(item => {
-            if (item.img) {
+            if (typeof item.img === 'string') {
+                return item; // 已經是 URL 
+            } else if (item.img) {
                 const imageBase64 = Buffer.from(item.img).toString('base64');
                 return {
                     ...item,

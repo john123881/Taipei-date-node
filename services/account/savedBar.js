@@ -16,7 +16,7 @@ export const getSavedBars = async (sid, page, perPage) => {
                 include: {
                     bar_area: true,
                     bar_type: true,
-                    bar_pic: { select: { bar_pic_name: true, bar_img: true }, take: 1 }
+                    bar_pic: { select: { bar_pic_name: true, bar_img: true, bar_img_url: true }, take: 1 }
                 }
             }
         }
@@ -27,7 +27,9 @@ export const getSavedBars = async (sid, page, perPage) => {
         const user = item.member_user;
         const photo = bar?.bar_pic?.[0];
         let imgData = null;
-        if (photo?.bar_img) {
+        if (photo?.bar_img_url) {
+            imgData = photo.bar_img_url;
+        } else if (photo?.bar_img) {
             imgData = `data:image/jpeg;base64,${Buffer.from(photo.bar_img).toString('base64')}`;
         }
         return {
