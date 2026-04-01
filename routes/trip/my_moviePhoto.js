@@ -21,6 +21,7 @@ router.get(trip.getMyMoviePhoto, async (req, res) => {
             poster_img: r.booking_movie?.poster_img,
             movie_description: r.booking_movie?.movie_description,
             movie_img: r.booking_movie?.movie_img,
+            movie_img_url: r.booking_movie?.movie_img_url,
         }));
 
         sendSuccess(res, formattedResults);

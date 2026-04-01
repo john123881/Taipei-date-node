@@ -21,6 +21,7 @@ router.get(trip.getMyBarPhoto, async (req, res) => {
                 bar_id: r.bar_id,
                 bar_pic_name: pic?.bar_pic_name || '',
                 bar_img: pic?.bar_img || null,
+                bar_img_url: pic?.bar_img_url || null,
             };
         });
 

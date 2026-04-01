@@ -13,6 +13,8 @@ router.get(trip.getBarSaved, async (req, res) => {
             bar_area_name: r.bar_area?.bar_area_name,
             bar_type_name: r.bar_type?.bar_type_name,
             bar_pic_name: r.bar_pic[0]?.bar_pic_name,
+            bar_img: r.bar_pic[0]?.bar_img,
+            bar_img_url: r.bar_pic[0]?.bar_img_url,
         }));
         sendSuccess(res, formattedResults);
     } catch (error) {

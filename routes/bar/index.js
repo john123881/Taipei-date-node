@@ -24,7 +24,7 @@ const barRouter = express.Router();
 
 // Mount all sub-routers
 barRouter.use('/', 
-    barListRouter,
+    barListRouter, // 優先處理 /bar-list (統一篩選與搜尋)
     barListTypeRouter,
     barListAreaRouter,
     barListRandomRouter,

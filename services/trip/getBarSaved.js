@@ -16,6 +16,8 @@ export const getBarSaved = async () => {
             bar_pic: {
                 select: {
                     bar_pic_name: true,
+                    bar_img: true,
+                    bar_img_url: true,
                 },
             },
         },

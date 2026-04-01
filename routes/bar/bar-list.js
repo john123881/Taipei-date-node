@@ -6,14 +6,16 @@ import catchAsync from '../../utils/catch-async.js';
 
 const barListRouter = express.Router();
 
-barListRouter.get(bar.getBarList, catchAsync(async (_req, res) => {
-    const results = await getBarList();
-    sendSuccess(res, results);
-}));
-
-barListRouter.get('/bar/bar-list', catchAsync(async (req, res) => {
-    const { bar_area_id, bar_type_id } = req.query;
-    const results = await getFilteredBarList({ bar_area_id, bar_type_id });
+// 統一處理酒吧列表 (支援篩選與搜尋)
+barListRouter.get('/bar-list', catchAsync(async (req, res) => {
+    const { bar_area_id, bar_type_id, searchTerm } = req.query;
+    
+    // 統一調用 getFilteredBarList，由該 service 處理所有篩選邏輯
+    const results = await getFilteredBarList({ 
+        bar_area_id, 
+        bar_type_id, 
+        searchTerm 
+    });
     sendSuccess(res, results);
 }));
 
