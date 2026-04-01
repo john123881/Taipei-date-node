@@ -13,6 +13,8 @@ import {
     editEventPhoto,
 } from '../../services/index.js';
 import authenticate from '../../middlewares/authenticate.js';
+import { validate } from '../../middlewares/validate.js';
+import { addCommentSchema, createPostSchema } from '../../schemas/community.js';
 import { sendSuccess, sendError } from '../../utils/response-handler.js';
 
 const router = express.Router();
@@ -24,12 +26,8 @@ router.use(
     })
 );
 
-router.post(community.createPost, authenticate, async (req, res) => {
+router.post(community.createPost, authenticate, validate(createPostSchema), async (req, res) => {
     const { context, userId } = req.body;
-
-    if (!context || !userId) {
-        return sendError(res, '必須提供貼文內容和用戶ID', 400);
-    }
 
     try {
         const newPost = await createPost(context, userId);
@@ -146,20 +144,12 @@ router.post(community.uploadEventPhoto, authenticate, async (req, res) => {
     }
 });
 
-router.post(community.addComment, authenticate, async (req, res) => {
+router.post(community.addComment, authenticate, validate(addCommentSchema), async (req, res) => {
     const { context, status, postId, userId } = req.body;
-
-    if (!context || !status || !postId || !userId) {
-        return sendError(res, '必須提供回覆內容, status, postID, 和 userID', 400);
-    }
 
     try {
         const result = await addComment(context, status, postId, userId);
-        sendSuccess(res, {
-            commentId: result.insertId,
-            email: result.email,
-            context: context,
-        }, '回覆新增成功');
+        sendSuccess(res, result, '回覆新增成功');
     } catch (err) {
         sendError(res, '回覆新增失敗', 500, err);
     }

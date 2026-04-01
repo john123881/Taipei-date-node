@@ -70,14 +70,14 @@ router.get(community.getUserInfo, async (req, res) => {
 });
 
 router.post(community.follow, authenticate, async (req, res) => {
-    const { userId, FollowingId } = req.body;
+    const { userId, followingId } = req.body;
 
-    if (!userId || !FollowingId) {
-        return sendError(res, '必須提供 follower_id 和 following_id', 400);
+    if (!userId || !followingId) {
+        return sendError(res, '必須提供 userId 和 followingId', 400);
     }
 
     try {
-        const results = await follow(userId, FollowingId);
+        const results = await follow(userId, followingId);
         sendSuccess(res, results, '追蹤成功');
     } catch (err) {
         sendError(res, '追蹤失敗', 500, err);
@@ -85,14 +85,14 @@ router.post(community.follow, authenticate, async (req, res) => {
 });
 
 router.delete(community.unfollow, authenticate, async (req, res) => {
-    const { userId, FollowingId } = req.body;
+    const { userId, followingId } = req.body;
 
-    if (!userId || !FollowingId) {
-        return sendError(res, '必須提供 follower_id 和 following_id', 400);
+    if (!userId || !followingId) {
+        return sendError(res, '必須提供 userId 和 followingId', 400);
     }
 
     try {
-        const results = await unfollow(userId, FollowingId);
+        const results = await unfollow(userId, followingId);
         sendSuccess(res, results, '取消追蹤成功');
     } catch (err) {
         sendError(res, '取消追蹤失敗', 500, err);

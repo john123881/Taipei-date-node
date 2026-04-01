@@ -8,8 +8,12 @@ import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 
 // 引入自定義配置與中介軟體
+import { checkEnv } from './utils/check-env.js';
 import corsMiddleware from './config/cors-config.js';
 import sessionMiddleware from './config/session-config.js';
+
+// 啟動執行環境變數檢查
+checkEnv();
 import globalLocals from './middlewares/global-locals.js';
 import { notFoundHandler, globalErrorHandler } from './middlewares/error-handler.js';
 import logger from './utils/logger.js';
