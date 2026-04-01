@@ -12,15 +12,10 @@ import corsMiddleware from './config/cors-config.js';
 import sessionMiddleware from './config/session-config.js';
 import globalLocals from './middlewares/global-locals.js';
 import { notFoundHandler, globalErrorHandler } from './middlewares/error-handler.js';
-import { initSocket } from './utils/socket-handler.js';
 import logger from './utils/logger.js';
 
 // 路由
 import {
-    communityRouter,
-    tripRouter,
-    barRouter,
-    dateRouter,
     bookingRouter,
     accountRouter,
     authRouter,
@@ -61,16 +56,12 @@ app.use('/', authRouter);
 app.use('/account', accountRouter);
 app.use('/community', communityRouter);
 app.use('/trip', tripRouter);
-app.use('/date', dateRouter);
 app.use('/bar', barRouter);
 app.use('/booking', bookingRouter);
 
-// --- 伺服器啟動 ---
+// 伺服器啟動
 const port = process.env.PORT || 3002;
 const server = http.createServer(app);
-
-// 初始化 Socket.IO
-initSocket(server);
 
 server.listen(port, '0.0.0.0', () => {
     const mode = process.env.NODE_ENV || 'production';
