@@ -1,4 +1,5 @@
 import prisma from '../../utils/prisma-client.js';
+import { transformImgSource } from '../../utils/image-helpers.js';
 
 export const getSuggestUsers = async () => {
     // Prisma does not natively support ORDER BY RAND()
@@ -10,5 +11,8 @@ export const getSuggestUsers = async () => {
         LIMIT 5
     `;
 
-    return results;
+    return results.map(user => ({
+        ...user,
+        avatar: transformImgSource(user, { imgKey: 'avatar', urlKey: 'avatar' })
+    }));
 };

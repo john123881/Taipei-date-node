@@ -1,4 +1,5 @@
 import prisma from '../../utils/prisma-client.js';
+import { transformImgSource } from '../../utils/image-helpers.js';
 
 export const getIndexMovieList = async () => {
     // Prisma does not have a native order-by-rand, so we use queryRaw safely
@@ -12,16 +13,9 @@ export const getIndexMovieList = async () => {
     `;
 
     return results.map((pic) => {
-        let imgSource = null;
-        if (pic.movie_img_url) {
-            imgSource = pic.movie_img_url;
-        } else if (pic.movie_img) {
-            imgSource = `data:image/jpeg;base64,${Buffer.from(pic.movie_img).toString('base64')}`;
-        }
-
         return {
             ...pic,
-            movie_img: imgSource,
+            movie_img: transformImgSource(pic, { imgKey: 'movie_img', urlKey: 'poster_img' }),
         };
     });
 };

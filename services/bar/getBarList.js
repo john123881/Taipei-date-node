@@ -1,4 +1,5 @@
 import prisma from '../../utils/prisma-client.js';
+import { transformImgSource } from '../../utils/image-helpers.js';
 
 export const getBarList = async () => {
     const results = await prisma.bars.findMany({
@@ -19,12 +20,7 @@ export const getBarList = async () => {
     // 格式化返回數據以符合原有的扁平結構（如果需要）
     return results.map((bar) => {
         const firstPic = bar.bar_pic[0];
-        let imgSource = null;
-        if (firstPic && firstPic.bar_img_url) {
-            imgSource = firstPic.bar_img_url;
-        } else if (firstPic && firstPic.bar_img) {
-            imgSource = `data:image/jpeg;base64,${Buffer.from(firstPic.bar_img).toString('base64')}`;
-        }
+        const imgSource = transformImgSource(firstPic, { imgKey: 'bar_img', urlKey: 'bar_img_url' });
 
         return {
             ...bar,

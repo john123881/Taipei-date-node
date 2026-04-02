@@ -1,4 +1,5 @@
 import prisma from '../../utils/prisma-client.js';
+import { transformImgSource } from '../../utils/image-helpers.js';
 
 export const getPostPage = async (postId) => {
     const post = await prisma.comm_post.findUnique({
@@ -26,12 +27,7 @@ export const getPostPage = async (postId) => {
     if (!post) return [];
 
     const photo = post.comm_photo[0];
-    let imgSource = null;
-    if (photo && photo.img_url) {
-        imgSource = photo.img_url;
-    } else if (photo && photo.img) {
-        imgSource = `data:image/jpeg;base64,${Buffer.from(photo.img).toString('base64')}`;
-    }
+    const imgSource = transformImgSource(photo);
 
     return [{
         post_id: post.post_id,

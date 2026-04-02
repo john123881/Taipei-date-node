@@ -1,4 +1,5 @@
 import prisma from '../../utils/prisma-client.js';
+import { transformImgSource } from '../../utils/image-helpers.js';
 import dayjs from 'dayjs';
 
 export const getEvents = async (page = 1, limit = 12) => {
@@ -25,12 +26,7 @@ export const getEvents = async (page = 1, limit = 12) => {
 
     return results.map((event) => {
         const photo = event.comm_events_photo[0];
-        let imgSource = null;
-        if (photo && photo.img_url) {
-            imgSource = photo.img_url;
-        } else if (photo && photo.img) {
-            imgSource = `data:image/jpeg;base64,${Buffer.from(photo.img).toString('base64')}`;
-        }
+        const imgSource = transformImgSource(photo);
 
         return {
             ...event,

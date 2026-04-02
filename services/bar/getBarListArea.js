@@ -1,4 +1,5 @@
 import prisma from '../../utils/prisma-client.js';
+import { transformImgSource } from '../../utils/image-helpers.js';
 
 // 獲取所有酒吧列表
 export const getBarListArea = async (bar_area_id) => {
@@ -13,16 +14,24 @@ export const getBarListArea = async (bar_area_id) => {
                 select: {
                     bar_pic_id: true,
                     bar_pic_name: true,
+                    bar_img: true,
+                    bar_img_url: true,
                 },
             },
         },
     });
 
-    return results.map((bar) => ({
-        ...bar,
-        bar_area_name: bar.bar_area?.bar_area_name,
-        bar_type_name: bar.bar_type?.bar_type_name,
-        bar_pic_id: bar.bar_pic[0]?.bar_pic_id,
-        bar_pic_name: bar.bar_pic[0]?.bar_pic_name,
-    }));
+    return results.map((bar) => {
+        const firstPic = bar.bar_pic[0];
+        const bar_img = transformImgSource(firstPic, { imgKey: 'bar_img', urlKey: 'bar_img_url' });
+        
+        return {
+            ...bar,
+            bar_area_name: bar.bar_area?.bar_area_name,
+            bar_type_name: bar.bar_type?.bar_type_name,
+            bar_pic_id: firstPic?.bar_pic_id,
+            bar_pic_name: firstPic?.bar_pic_name,
+            bar_img,
+        };
+    });
 };

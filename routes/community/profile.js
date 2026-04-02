@@ -13,6 +13,13 @@ import {
     getFollowings,
 } from '../../services/index.js';
 import authenticate from '../../middlewares/authenticate.js';
+import { validate } from '../../middlewares/validate.js';
+import { 
+    getUserPostsSchema, 
+    followUserSchema, 
+    followingIdSchema, 
+    followerIdSchema 
+} from '../../schemas/community.js';
 import { sendSuccess, sendError } from '../../utils/response-handler.js';
 
 const router = express.Router();
@@ -24,78 +31,74 @@ router.get(community.getPosts, async (req, res) => {
     sendSuccess(res, results);
 });
 
-router.get(community.getUserPosts, async (req, res) => {
+router.get(community.getUserPosts, validate(getUserPostsSchema), async (req, res) => {
     try {
         const { userId } = req.params;
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 12;
         const results = await getUserPosts(userId, page, limit);
 
-        if (!results || results.length === 0) {
-            return sendSuccess(res, []);
-        }
-
-        const newResults = results.map((obj) => ({ ...obj }));
-        sendSuccess(res, newResults);
+        sendSuccess(res, results || []);
     } catch (error) {
-        sendError(res, '獲取貼文失敗', 500, error);
+        console.error('[Route Error] getUserPosts:', error);
+        sendError(res, '獲取貼文失敗', 500, error.message);
     }
 });
 
-router.get(community.getFollows, async (req, res) => {
+router.get(community.getFollows, validate(getUserPostsSchema), async (req, res) => {
     try {
         const { userId } = req.params;
         const results = await getFollows(userId, userId);
         sendSuccess(res, results);
     } catch (error) {
-        sendError(res, '伺服器錯誤', 500, error);
+        console.error('[Route Error] getFollows:', error);
+        sendError(res, '獲取追蹤資訊失敗', 500, error.message);
     }
 });
 
-router.get(community.getCountPosts, async (req, res) => {
+router.get(community.getCountPosts, validate(getUserPostsSchema), async (req, res) => {
     try {
         const { userId } = req.params;
         const results = await getCountPosts(userId);
-        res.json(results);
+        sendSuccess(res, results);
     } catch (error) {
-        console.error('getCountPosts error:', error);
-        res.status(500).json({ status: false, message: '伺服器錯誤', error: error.message });
+        console.error('[Route Error] getCountPosts:', error);
+        sendError(res, '獲取貼文數量失敗', 500, error.message);
     }
 });
 
-router.get(community.getUserInfo, async (req, res) => {
-    const { userId } = req.params;
-    const results = await getUserInfo(userId);
-    sendSuccess(res, results);
+router.get(community.getUserInfo, validate(getUserPostsSchema), async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const results = await getUserInfo(userId);
+        sendSuccess(res, results);
+    } catch (error) {
+        console.error('[Route Error] getUserInfo:', error);
+        sendError(res, '獲取用戶資訊失敗', 500, error.message);
+    }
 });
 
-router.post(community.follow, authenticate, async (req, res) => {
+router.post(community.follow, authenticate, validate(followUserSchema), async (req, res) => {
     const { userId, followingId } = req.body;
-
-    if (!userId || !followingId) {
-        return sendError(res, '必須提供 userId 和 followingId', 400);
-    }
 
     try {
         const results = await follow(userId, followingId);
         sendSuccess(res, results, '追蹤成功');
     } catch (err) {
-        sendError(res, '追蹤失敗', 500, err);
+        console.error('[Route Error] follow:', err);
+        sendError(res, '追蹤失敗', 500, err.message);
     }
 });
 
-router.delete(community.unfollow, authenticate, async (req, res) => {
+router.delete(community.unfollow, authenticate, validate(followUserSchema), async (req, res) => {
     const { userId, followingId } = req.body;
-
-    if (!userId || !followingId) {
-        return sendError(res, '必須提供 userId 和 followingId', 400);
-    }
 
     try {
         const results = await unfollow(userId, followingId);
         sendSuccess(res, results, '取消追蹤成功');
     } catch (err) {
-        sendError(res, '取消追蹤失敗', 500, err);
+        console.error('[Route Error] unfollow:', err);
+        sendError(res, '取消追蹤失敗', 500, err.message);
     }
 });
 
@@ -109,37 +112,32 @@ router.get(community.checkFollowStatus, authenticate, async (req, res) => {
         const result = await checkFollowStatus(userId, followingId);
         sendSuccess(res, result);
     } catch (err) {
-        sendError(res, 'Error checking follow status', 500, err);
+        console.error('[Route Error] checkFollowStatus:', err);
+        sendError(res, '檢查追蹤狀態時發生錯誤', 500, err.message);
     }
 });
 
-router.get(community.getFollowers, async (req, res) => {
+router.get(community.getFollowers, validate(followingIdSchema), async (req, res) => {
     const { followingId } = req.params;
-
-    if (!followingId) {
-        return sendError(res, '需要提供 followingId', 400);
-    }
 
     try {
         const result = await getFollowers(followingId);
         sendSuccess(res, result);
     } catch (err) {
-        sendError(res, 'Error checking followers', 500, err);
+        console.error('[Route Error] getFollowers:', err);
+        sendError(res, '獲取粉絲列表時發生錯誤', 500, err.message);
     }
 });
 
-router.get(community.getFollowings, async (req, res) => {
+router.get(community.getFollowings, validate(followerIdSchema), async (req, res) => {
     const { followerId } = req.params;
-
-    if (!followerId) {
-        return sendError(res, '需要提供 followerId', 400);
-    }
 
     try {
         const result = await getFollowings(followerId);
         sendSuccess(res, result);
     } catch (err) {
-        sendError(res, 'Error checking followings', 500, err);
+        console.error('[Route Error] getFollowings:', err);
+        sendError(res, '獲取追蹤列表時發生錯誤', 500, err.message);
     }
 });
 

@@ -16,21 +16,24 @@ import {
     markNotiAsRead,
 } from '../../services/index.js';
 import authenticate from '../../middlewares/authenticate.js';
+import { validate } from '../../middlewares/validate.js';
+import { 
+    getPostsByKeywordSchema, 
+    getCommentsSchema, 
+    postInteractionSchema,
+    checkPostStatusSchema,
+    deletePostSchema,
+    deleteCommentSchema 
+} from '../../schemas/community.js';
 import { sendSuccess, sendError } from '../../utils/response-handler.js';
 
 const router = express.Router();
 
-router.get(community.getPostsByKeyword, async (req, res) => {
+router.get(community.getPostsByKeyword, validate(getPostsByKeywordSchema), async (req, res) => {
     try {
-        const { keyword } = req.query;
-        const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 12;
+        const { keyword, page, limit } = req.query;
 
-        if (!keyword || typeof keyword !== 'string' || !keyword.trim()) {
-            return sendError(res, '需要提供有效關鍵字', 400);
-        }
-
-        const results = await getPostsByKeyword(keyword.trim(), page, limit);
+        const results = await getPostsByKeyword(keyword, page, limit);
         sendSuccess(res, results);
     } catch (error) {
         console.error('[Route Error] getPostsByKeyword:', error);
@@ -50,23 +53,11 @@ router.get(community.getPosts, async (req, res) => {
     }
 });
 
-router.get(community.getComments, async (req, res) => {
+router.get(community.getComments, validate(getCommentsSchema), async (req, res) => {
     try {
         const { postIds } = req.query;
-        if (!postIds) {
-            return sendError(res, '需要提供 postIds', 400);
-        }
-        
-        // 強化參數處理：支援逗號分隔字串或陣列
-        const postIdArray = (typeof postIds === 'string' ? postIds.split(',') : (Array.isArray(postIds) ? postIds : [postIds]))
-            .map((id) => parseInt(String(id).trim()))
-            .filter(id => !isNaN(id));
 
-        if (postIdArray.length === 0) {
-            return sendSuccess(res, []);
-        }
-
-        const results = await getComments(postIdArray);
+        const results = await getComments(postIds);
         sendSuccess(res, results);
     } catch (error) {
         console.error('[Route Error] getComments:', error);
@@ -84,12 +75,8 @@ router.get(community.getSuggestUsers, async (req, res) => {
     }
 });
 
-router.post(community.savePost, authenticate, async (req, res) => {
+router.post(community.savePost, authenticate, validate(postInteractionSchema), async (req, res) => {
     const { postId, userId } = req.body;
-
-    if (!postId || !userId) {
-        return sendError(res, '必須提供貼文ID和用戶ID', 400);
-    }
 
     try {
         const results = await savePost(postId, userId);
@@ -100,12 +87,8 @@ router.post(community.savePost, authenticate, async (req, res) => {
     }
 });
 
-router.delete(community.unsavePost, authenticate, async (req, res) => {
+router.delete(community.unsavePost, authenticate, validate(postInteractionSchema), async (req, res) => {
     const { postId, userId } = req.body;
-
-    if (!postId || !userId) {
-        return sendError(res, '必須提供貼文ID和用戶ID', 400);
-    }
 
     try {
         const results = await unsavePost(postId, userId);
@@ -116,12 +99,8 @@ router.delete(community.unsavePost, authenticate, async (req, res) => {
     }
 });
 
-router.post(community.likePost, authenticate, async (req, res) => {
+router.post(community.likePost, authenticate, validate(postInteractionSchema), async (req, res) => {
     const { postId, userId } = req.body;
-
-    if (!postId || !userId) {
-        return sendError(res, '必須提供貼文ID和用戶ID', 400);
-    }
 
     try {
         const results = await likePost(postId, userId);
@@ -132,12 +111,8 @@ router.post(community.likePost, authenticate, async (req, res) => {
     }
 });
 
-router.delete(community.unlikePost, authenticate, async (req, res) => {
+router.delete(community.unlikePost, authenticate, validate(postInteractionSchema), async (req, res) => {
     const { postId, userId } = req.body;
-
-    if (!postId || !userId) {
-        return sendError(res, '必須提供貼文ID和用戶ID', 400);
-    }
 
     try {
         const results = await unlikePost(postId, userId);
@@ -148,22 +123,11 @@ router.delete(community.unlikePost, authenticate, async (req, res) => {
     }
 });
 
-router.get(community.checkPostStatus, async (req, res) => {
+router.get(community.checkPostStatus, validate(checkPostStatusSchema), async (req, res) => {
     try {
         const { userId, postIds } = req.query;
-        if (!userId || !postIds) {
-            return sendError(res, '需要提供 userId 和 postIds', 400);
-        }
 
-        const postIdArray = (typeof postIds === 'string' ? postIds.split(',') : (Array.isArray(postIds) ? postIds : [postIds]))
-            .map((id) => parseInt(String(id).trim()))
-            .filter(id => !isNaN(id));
-
-        if (postIdArray.length === 0) {
-            return sendSuccess(res, {});
-        }
-
-        const results = await checkPostStatus(userId, postIdArray);
+        const results = await checkPostStatus(userId, postIds);
         sendSuccess(res, results);
     } catch (error) {
         console.error('[Route Error] checkPostStatus:', error);
@@ -171,11 +135,8 @@ router.get(community.checkPostStatus, async (req, res) => {
     }
 });
 
-router.delete(community.deletePost, authenticate, async (req, res) => {
+router.delete(community.deletePost, authenticate, validate(deletePostSchema), async (req, res) => {
     const { postId } = req.body;
-    if (!postId) {
-        return sendError(res, '需要提供postId', 400);
-    }
     try {
         const results = await deletePost(postId);
         sendSuccess(res, results, '刪除貼文成功');
@@ -184,12 +145,9 @@ router.delete(community.deletePost, authenticate, async (req, res) => {
     }
 });
 
-router.delete(community.deleteComment, authenticate, async (req, res) => {
+router.delete(community.deleteComment, authenticate, validate(deleteCommentSchema), async (req, res) => {
     const { commentId } = req.body;
 
-    if (!commentId) {
-        return sendError(res, '需要提供 commentId', 400);
-    }
     try {
         const results = await deleteComment(commentId);
         sendSuccess(res, results, '刪除留言成功');

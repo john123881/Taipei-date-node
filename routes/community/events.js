@@ -10,6 +10,13 @@ import {
     getEventPage,
 } from '../../services/index.js';
 import authenticate from '../../middlewares/authenticate.js';
+import { validate } from '../../middlewares/validate.js';
+import { 
+    getEventPageSchema, 
+    eventInteractionSchema, 
+    checkEventStatusSchema,
+    deleteEventSchema
+} from '../../schemas/community.js';
 import { sendSuccess, sendError } from '../../utils/response-handler.js';
 
 const router = express.Router();
@@ -25,90 +32,74 @@ router.get(community.getEvents, async (req, res) => {
     }
 });
 
-router.post(community.attendEvent, authenticate, async (req, res) => {
+router.post(community.attendEvent, authenticate, validate(eventInteractionSchema), async (req, res) => {
     const { eventId, userId } = req.body;
-
-    if (!eventId || !userId) {
-        return sendError(res, '必須提供活動ID和用戶ID', 400);
-    }
 
     try {
         const results = await attendEvent(eventId, userId);
         sendSuccess(res, results, '參加活動成功');
     } catch (err) {
-        sendError(res, '參加活動失敗', 500, err);
+        console.error('[Route Error] attendEvent:', err);
+        sendError(res, '參加活動失敗', 500, err.message);
     }
 });
 
-router.delete(community.notAttendEvent, authenticate, async (req, res) => {
+router.delete(community.notAttendEvent, authenticate, validate(eventInteractionSchema), async (req, res) => {
     const { eventId, userId } = req.body;
-
-    if (!eventId || !userId) {
-        return sendError(res, '必須提供貼文ID和用戶ID', 400);
-    }
 
     try {
         const results = await notAttendEvent(eventId, userId);
         sendSuccess(res, results, '取消參加活動成功');
     } catch (err) {
-        sendError(res, '取消活動失敗', 500, err);
+        console.error('[Route Error] notAttendEvent:', err);
+        sendError(res, '取消活動失敗', 500, err.message);
     }
 });
 
-router.get(community.isAttendedEvent, authenticate, async (req, res) => {
+router.get(community.isAttendedEvent, authenticate, validate(eventInteractionSchema), async (req, res) => {
     try {
         const { eventId, userId } = req.query;
-
-        if (!eventId || !userId) {
-            return sendError(res, '必須提供貼文ID(eventId)和用戶ID', 400);
-        }
 
         const isAttended = await isAttendedEvent(eventId, userId);
         sendSuccess(res, { isAttended });
     } catch (error) {
-        sendError(res, '伺服器錯誤', 500, error);
+        console.error('[Route Error] isAttendedEvent:', error);
+        sendError(res, '檢查活動狀態失敗', 500, error.message);
     }
 });
 
-router.get(community.checkEventStatus, authenticate, async (req, res) => {
+router.get(community.checkEventStatus, authenticate, validate(checkEventStatusSchema), async (req, res) => {
     try {
         const { userId, eventIds } = req.query;
-        if (!userId || !eventIds) {
-            return sendError(res, '需要提供 userId 和 eventIds', 400);
-        }
-        const eventIdArray = eventIds.split(',').map((id) => parseInt(id.trim()));
-        const results = await checkEventStatus(userId, eventIdArray);
+
+        const results = await checkEventStatus(userId, eventIds);
         sendSuccess(res, results);
     } catch (error) {
-        sendError(res, '伺服器錯誤', 500, error);
+        console.error('[Route Error] checkEventStatus:', error);
+        sendError(res, '檢查活動狀態時發生錯誤', 500, error.message);
     }
 });
 
-router.delete(community.deleteEvent, authenticate, async (req, res) => {
+router.delete(community.deleteEvent, authenticate, validate(deleteEventSchema), async (req, res) => {
     const { eventId } = req.body;
-    if (!eventId) {
-        return sendError(res, '需要提供 eventId', 400);
-    }
     try {
         const results = await deleteEvent(eventId);
         sendSuccess(res, results, '刪除活動成功');
     } catch (err) {
-        sendError(res, '刪除活動失敗', 500, err);
+        console.error('[Route Error] deleteEvent:', err);
+        sendError(res, '刪除活動失敗', 500, err.message);
     }
 });
 
-router.get(community.getEventPage, async (req, res) => {
+router.get(community.getEventPage, validate(getEventPageSchema), async (req, res) => {
     const { eventId } = req.params;
-
-    if (!eventId) {
-        return sendError(res, '需要提供 eventId', 400);
-    }
 
     try {
         const results = await getEventPage(eventId);
         sendSuccess(res, results);
     } catch (error) {
-        sendError(res, '內部伺服器錯誤', 500, error);
+        console.error('[Route Error] getEventPage:', error);
+        sendError(res, '獲取活動詳情時發生錯誤', 500, error.message);
     }
 });
 

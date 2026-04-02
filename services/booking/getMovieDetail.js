@@ -1,4 +1,5 @@
 import prisma from '../../utils/prisma-client.js';
+import { transformImgSource } from '../../utils/image-helpers.js';
 
 export const getMovieDetail = async (movieId) => {
     const movie = await prisma.booking_movie.findUnique({
@@ -20,13 +21,8 @@ export const getMovieDetail = async (movieId) => {
 
     if (!movie) return [];
 
-    let result = { ...movie };
-    if (movie.movie_img_url) {
-        result.movie_img = movie.movie_img_url;
-    } else if (movie.movie_img) {
-        const imageBase64 = Buffer.from(movie.movie_img).toString('base64');
-        result.movie_img = `data:image/jpeg;base64,${imageBase64}`;
-    }
-
-    return [result];
+    return [{
+        ...movie,
+        movie_img: transformImgSource(movie, { imgKey: 'movie_img', urlKey: 'movie_img_url' }),
+    }];
 };

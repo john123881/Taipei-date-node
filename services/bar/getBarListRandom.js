@@ -1,4 +1,5 @@
 import prisma from '../../utils/prisma-client.js';
+import { transformImgSource } from '../../utils/image-helpers.js';
 
 export const getBarListRandom = async () => {
     // 使用 $queryRaw 來進行 RAND() 查詢，這是 MySQL 中最直接的方式
@@ -26,16 +27,11 @@ export const getBarListRandom = async () => {
 
     // 將 BLOB 數據轉換為 Base64 字符串
     const pics = results.map((pic) => {
-        let imgSource = null;
-        if (pic.bar_img_url) {
-            imgSource = pic.bar_img_url;
-        } else if (pic.bar_img) {
-            imgSource = `data:image/jpeg;base64,${Buffer.from(pic.bar_img).toString('base64')}`;
-        }
+        const bar_img = transformImgSource(pic, { imgKey: 'bar_img', urlKey: 'bar_img_url' });
 
         return {
             ...pic,
-            bar_img: imgSource,
+            bar_img,
         };
     });
     return pics;

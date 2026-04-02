@@ -1,4 +1,5 @@
 import prisma from '../../utils/prisma-client.js';
+import { transformImgSource } from '../../utils/image-helpers.js';
 
 export const getPosts = async (page = 1, limit = 12) => {
     const skip = (Number(page) - 1) * Number(limit);
@@ -27,13 +28,8 @@ export const getPosts = async (page = 1, limit = 12) => {
     });
 
     return results.map((post) => {
-        const photo = post.comm_photo[0]; // SQL join was 1:1 or first
-        let imgSource = null;
-        if (photo && photo.img_url) {
-            imgSource = photo.img_url;
-        } else if (photo && photo.img) {
-            imgSource = `data:image/jpeg;base64,${Buffer.from(photo.img).toString('base64')}`;
-        }
+        const photo = post.comm_photo[0];
+        const imgSource = transformImgSource(photo);
 
         return {
             post_id: post.post_id,

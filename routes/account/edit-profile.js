@@ -2,17 +2,15 @@ import express from 'express';
 import { account } from '../apiConfig.js';
 import authenticate from '../../middlewares/authenticate.js';
 import { getProfile, updateProfile, getAllTypes } from '../../services/index.js';
+import { validate } from '../../middlewares/validate.js';
+import { sidSchema, editProfileSchema } from '../../schemas/account.js';
 import { sendSuccess, sendError } from '../../utils/response-handler.js';
 
 const editProfileRouter = express.Router();
 
 // 編輯-讀取編輯頁面的個人資料API
-editProfileRouter.get(account.getEditProfile, authenticate, async (req, res) => {
-    if (!req.my_jwt?.id) {
-        return sendError(res, '沒授權', 401);
-    }
-
-    let sid = +req.params.sid || 0;
+editProfileRouter.get(account.getEditProfile, authenticate, validate(sidSchema), async (req, res) => {
+    const sid = req.params.sid;
 
     try {
         const responseData = await getProfile(sid);
@@ -28,14 +26,15 @@ editProfileRouter.get(account.getEditProfile, authenticate, async (req, res) => 
             movieType: [movieTypes],
         });
     } catch (error) {
-        sendError(res, '伺服器內部錯誤', 500, error);
+        console.error('[Route Error] getEditProfile:', error);
+        sendError(res, '伺服器內部錯誤', 500, error.message);
     }
 });
 
 // 編輯-編輯個人資料API
-editProfileRouter.put(account.editProfile, async (req, res) => {
+editProfileRouter.put(account.editProfile, authenticate, validate(editProfileSchema), async (req, res) => {
     try {
-        let sid = +req.params.sid || 0;
+        const sid = req.params.sid;
         const updatedUser = await updateProfile(sid, req.body);
 
         if (updatedUser) {
@@ -44,7 +43,8 @@ editProfileRouter.put(account.editProfile, async (req, res) => {
             sendError(res, '沒有編輯', 400);
         }
     } catch (error) {
-        sendError(res, '編輯失敗', 500, error);
+        console.error('[Route Error] editProfile:', error);
+        sendError(res, '編輯失敗', 500, error.message);
     }
 });
 

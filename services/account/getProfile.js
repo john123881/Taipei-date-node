@@ -1,5 +1,6 @@
 import prisma from "../../utils/prisma-client.js";
 import dayjs from 'dayjs';
+import { transformImgSource } from '../../utils/image-helpers.js';
 
 export const getProfile = async (sid) => {
     const user = await prisma.member_user.findUnique({
@@ -23,8 +24,13 @@ export const getProfile = async (sid) => {
     const total_points = totalPointsInc - totalPointsDec;
 
     const { password_hash, ...userWithoutPassword } = user;
+    
+    // 雖然資料庫中目前存的是 S3 URL，但加上 transformImgSource 更保險，也能統一風格
+    const avatar = transformImgSource(user, { imgKey: 'avatar', urlKey: 'avatar' });
+
     return {
         ...userWithoutPassword,
+        avatar,
         bar_type_name: user.bar_type?.bar_type_name || null,
         movie_type: user.movie_type?.movie_type || null,
         total_points: total_points,

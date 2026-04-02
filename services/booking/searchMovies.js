@@ -1,4 +1,5 @@
 import prisma from '../../utils/prisma-client.js';
+import { transformImgSource } from '../../utils/image-helpers.js';
 
 export const searchMovies = async (searchTerm) => {
     const results = await prisma.booking_movie.findMany({
@@ -10,16 +11,9 @@ export const searchMovies = async (searchTerm) => {
     });
 
     return results.map((pic) => {
-        let imgSource = null;
-        if (pic.movie_img_url) {
-            imgSource = pic.movie_img_url;
-        } else if (pic.movie_img) {
-            imgSource = `data:image/jpeg;base64,${Buffer.from(pic.movie_img).toString('base64')}`;
-        }
-
         return {
             ...pic,
-            movie_img: imgSource,
+            movie_img: transformImgSource(pic, { imgKey: 'movie_img', urlKey: 'poster_img' }),
         };
     });
 };

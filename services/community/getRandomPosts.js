@@ -1,4 +1,5 @@
 import prisma from '../../utils/prisma-client.js';
+import { transformImgSource } from '../../utils/image-helpers.js';
 
 export const getRandomPosts = async (page = 1, limit = 12) => {
     const offset = (Number(page) - 1) * Number(limit);
@@ -32,12 +33,7 @@ export const getRandomPosts = async (page = 1, limit = 12) => {
         LIMIT ${Number(limit)} OFFSET ${Number(offset)}`;
 
     return results.map((post) => {
-        let imgSource = null;
-        if (post.img_url) {
-            imgSource = post.img_url;
-        } else if (post.img) {
-            imgSource = `data:image/jpeg;base64,${Buffer.from(post.img).toString('base64')}`;
-        }
+        const imgSource = transformImgSource(post);
 
         return {
             ...post,

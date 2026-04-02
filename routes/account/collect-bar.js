@@ -2,25 +2,23 @@ import express from 'express';
 import { account } from '../apiConfig.js';
 import authenticate from '../../middlewares/authenticate.js';
 import { getSavedBars, deleteSavedBar } from '../../services/index.js';
+import { validate } from '../../middlewares/validate.js';
+import { getCollectionSchema, deleteCollectionSchema } from '../../schemas/account.js';
 import { sendSuccess, sendError } from '../../utils/response-handler.js';
 
 const collectBarRouter = express.Router();
 
 // 收藏 - 酒吧列表
-collectBarRouter.get(account.collectBar, authenticate, async (req, res) => {
+collectBarRouter.get(account.collectBar, authenticate, validate(getCollectionSchema), async (req, res) => {
     try {
-        if (!req.my_jwt?.id) {
-            return sendError(res, '沒授權', 401);
-        }
-        const sid = parseInt(req.params.sid) || 0;
-        const page = parseInt(req.query.page) || 1;
+        const sid = req.params.sid;
+        const page = req.query.page;
         const perPage = 5;
 
         const { totalRows, totalPages, data } = await getSavedBars(sid, page, perPage);
 
-        if (page < 1 || (totalPages > 0 && page > totalPages)) {
-            const targetPage = page < 1 ? 1 : totalPages;
-            const newQuery = { ...req.query, page: targetPage };
+        if (totalPages > 0 && page > totalPages) {
+            const newQuery = { ...req.query, page: totalPages };
             const qp = new URLSearchParams(newQuery).toString();
             return res.redirect(`${req.originalUrl.split('?')[0]}?${qp}`);
         }
@@ -34,17 +32,15 @@ collectBarRouter.get(account.collectBar, authenticate, async (req, res) => {
         });
 
     } catch (error) {
-        sendError(res, '伺服器錯誤', 500, error);
+        console.error('[Route Error] collectBar:', error);
+        sendError(res, '獲取收藏酒吧列表失敗', 500, error.message);
     }
 });
 
 // 收藏 - 刪除酒吧
-collectBarRouter.delete(account.collectBarDelete, authenticate, async (req, res) => {
+collectBarRouter.delete(account.collectBarDelete, authenticate, validate(deleteCollectionSchema), async (req, res) => {
     try {
-        if (!req.my_jwt?.id) {
-            return sendError(res, '沒授權', 401);
-        }
-        const save_id = parseInt(req.params.save_id) || 0;
+        const save_id = req.params.save_id;
         const result = await deleteSavedBar(save_id);
 
         if (!result) {
@@ -54,7 +50,8 @@ collectBarRouter.delete(account.collectBarDelete, authenticate, async (req, res)
         sendSuccess(res, { action: 'remove' }, '刪除成功');
 
     } catch (error) {
-        sendError(res, '伺服器錯誤', 500, error);
+        console.error('[Route Error] collectBarDelete:', error);
+        sendError(res, '刪除收藏酒吧失敗', 500, error.message);
     }
 });
 

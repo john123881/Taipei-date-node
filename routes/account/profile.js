@@ -2,16 +2,14 @@ import express from 'express';
 import { account } from '../apiConfig.js';
 import authenticate from '../../middlewares/authenticate.js';
 import { getProfile, checkTodayPoints } from '../../services/index.js';
+import { validate } from '../../middlewares/validate.js';
+import { sidSchema } from '../../schemas/account.js';
 import { sendSuccess, sendError } from '../../utils/response-handler.js';
 
 const profileRouter = express.Router();
 
-profileRouter.get(account.getProfile, authenticate, async (req, res) => {
-    if (!req.my_jwt?.id) {
-        return sendError(res, '沒授權', 401);
-    }
-
-    let sid = +req.params.sid || 0;
+profileRouter.get(account.getProfile, authenticate, validate(sidSchema), async (req, res) => {
+    const sid = req.params.sid;
 
     try {
         const responseData = await getProfile(sid);
@@ -27,7 +25,8 @@ profileRouter.get(account.getProfile, authenticate, async (req, res) => {
             hasLogin,
         });
     } catch (error) {
-        sendError(res, '伺服器內部錯誤', 500, error);
+        console.error('[Route Error] getProfile:', error);
+        sendError(res, '伺服器內部錯誤', 500, error.message);
     }
 });
 
