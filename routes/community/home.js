@@ -26,15 +26,15 @@ router.get(community.getPostsByKeyword, async (req, res) => {
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 12;
 
-        if (!keyword) {
-            return sendError(res, '需要提供 keyword', 400);
+        if (!keyword || typeof keyword !== 'string' || !keyword.trim()) {
+            return sendError(res, '需要提供有效關鍵字', 400);
         }
 
-        const results = await getPostsByKeyword(keyword, page, limit);
+        const results = await getPostsByKeyword(keyword.trim(), page, limit);
         sendSuccess(res, results);
     } catch (error) {
-        console.error('getPostsByKeyword error:', error);
-        sendError(res, '伺服器錯誤', 500, error);
+        console.error('[Route Error] getPostsByKeyword:', error);
+        sendError(res, '搜尋貼文時發生內部錯誤', 500, error.message);
     }
 });
 
@@ -56,12 +56,21 @@ router.get(community.getComments, async (req, res) => {
         if (!postIds) {
             return sendError(res, '需要提供 postIds', 400);
         }
-        const postIdArray = postIds.split(',').map((id) => parseInt(id.trim()));
+        
+        // 強化參數處理：支援逗號分隔字串或陣列
+        const postIdArray = (typeof postIds === 'string' ? postIds.split(',') : (Array.isArray(postIds) ? postIds : [postIds]))
+            .map((id) => parseInt(String(id).trim()))
+            .filter(id => !isNaN(id));
+
+        if (postIdArray.length === 0) {
+            return sendSuccess(res, []);
+        }
+
         const results = await getComments(postIdArray);
         sendSuccess(res, results);
     } catch (error) {
-        console.error('getComments error:', error);
-        sendError(res, '伺服器錯誤', 500, error);
+        console.error('[Route Error] getComments:', error);
+        sendError(res, '獲取留言時發生內部錯誤', 500, error.message);
     }
 });
 
@@ -145,12 +154,20 @@ router.get(community.checkPostStatus, async (req, res) => {
         if (!userId || !postIds) {
             return sendError(res, '需要提供 userId 和 postIds', 400);
         }
-        const postIdArray = postIds.split(',').map((id) => parseInt(id.trim()));
+
+        const postIdArray = (typeof postIds === 'string' ? postIds.split(',') : (Array.isArray(postIds) ? postIds : [postIds]))
+            .map((id) => parseInt(String(id).trim()))
+            .filter(id => !isNaN(id));
+
+        if (postIdArray.length === 0) {
+            return sendSuccess(res, {});
+        }
+
         const results = await checkPostStatus(userId, postIdArray);
         sendSuccess(res, results);
     } catch (error) {
-        console.error('checkPostStatus error:', error);
-        sendError(res, '伺服器錯誤', 500, error);
+        console.error('[Route Error] checkPostStatus:', error);
+        sendError(res, '檢查貼文狀態時發生內部錯誤', 500, error.message);
     }
 });
 
