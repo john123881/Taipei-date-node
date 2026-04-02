@@ -1,15 +1,10 @@
 import express from 'express';
 // bar list
 import barListRouter from './bar-list.js';
-import barListTypeRouter from './bar-list-type.js';
-import barListAreaRouter from './bar-list-area.js';
+import barListFiltersRouter from './bar-list-filters.js';
 import barListRandomRouter from './bar-list-random.js';
-import barListAuthRouter from './bar-list(add-auth).js';
-import barListSportRouter from './barType/bar-list-sport.js';
-import barListMusicRouter from './barType/bar-list-music.js';
-import barListForeignRouter from './barType/bar-list-foreign.js';
-import barListSpecialtyRouter from './barType/bar-list-specialty.js';
-import barListOthersRouter from './barType/bar-list-others.js';
+// import barListAuthRouter from './bar-list(add-auth).js';
+import barListCategoriesRouter from './bar-list-categories.js';
 import barTypeRouter from './bar-type.js';
 import barAreaRouter from './bar-area.js';
 import barDetailRouter from './bar-detail.js';
@@ -25,15 +20,10 @@ const barRouter = express.Router();
 // Mount all sub-routers
 barRouter.use('/', 
     barListRouter, // 優先處理 /bar-list (統一篩選與搜尋)
-    barListTypeRouter,
-    barListAreaRouter,
+    barListFiltersRouter,
     barListRandomRouter,
-    barListAuthRouter,
-    barListSportRouter,
-    barListMusicRouter,
-    barListForeignRouter,
-    barListSpecialtyRouter,
-    barListOthersRouter,
+    // barListAuthRouter,
+    barListCategoriesRouter,
     barTypeRouter,
     barAreaRouter,
     barDetailRouter,

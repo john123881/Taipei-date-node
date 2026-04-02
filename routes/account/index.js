@@ -7,9 +7,7 @@ import changePasswordRouter from './change-password.js';
 import gameRecordRouter from './game-record.js';
 import recordPointRouter from './record-point.js';
 import recordGameRouter from './record-game.js';
-import collectPostRouter from './collect-post.js';
-import collectBarRouter from './collect-bar.js';
-import collectMovieRouter from './collect-movie.js';
+import collectionsRouter from './collections.js';
 import collectListRouter from './collect-list.js';
 
 const accountRouter = express.Router();
@@ -23,9 +21,7 @@ accountRouter.use('/',
     gameRecordRouter,
     recordPointRouter,
     recordGameRouter,
-    collectPostRouter,
-    collectBarRouter,
-    collectMovieRouter,
+    collectionsRouter,
     collectListRouter
 );
 
