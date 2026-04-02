@@ -34,9 +34,9 @@ export const editPost = async (context, postId) => {
 
     if (post) {
         const photo = post.comm_photo[0];
-        let imgBase64 = null;
+        let imgSource = null;
         if (photo && photo.img) {
-            imgBase64 = `data:image/jpeg;base64,${Buffer.from(photo.img).toString('base64')}`;
+            imgSource = `data:image/jpeg;base64,${Buffer.from(photo.img).toString('base64')}`;
         }
 
         return {
@@ -49,7 +49,7 @@ export const editPost = async (context, postId) => {
             username: post.member_user?.username,
             avatar: post.member_user?.avatar,
             photo_name: photo?.photo_name,
-            img: imgBase64,
+            img: imgSource,
         };
     }
 

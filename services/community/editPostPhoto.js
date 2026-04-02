@@ -58,7 +58,7 @@ export const editPostPhoto = async (photoName, imageData, postId) => {
             username: post.member_user?.username,
             avatar: post.member_user?.avatar,
             photo_name: photo?.photo_name,
-            img: imgBase64,
+            img: imgSource,
         };
     }
 

@@ -50,7 +50,7 @@ export const getPostsByKeyword = async (keyword, page = 1, limit = 12) => {
             username: post.member_user?.username,
             avatar: post.member_user?.avatar,
             photo_name: photo?.photo_name,
-            img: imgBase64,
+            img: imgSource,
         };
     });
 };

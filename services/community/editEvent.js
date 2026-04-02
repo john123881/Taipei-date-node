@@ -61,7 +61,7 @@ export const editEvent = async (
             end_date: dayjs(event.end_date).format(endDateFormat),
             end_time: event.end_time ? dayjs(event.end_time).format('HH:mm') : null,
             photo_name: photo?.photo_name,
-            img: imgBase64,
+            img: imgSource,
         };
     }
 

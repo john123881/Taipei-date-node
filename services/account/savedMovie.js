@@ -33,12 +33,18 @@ export const getSavedMovies = async (sid, page, perPage) => {
             email: user?.email,
             username: user?.username,
             title: movie?.title,
+            movie_name: movie?.title, // 冗餘欄位以相容
+            name: movie?.title,       // 冗餘欄位以相容
             movie_id: movie?.movie_id,
             description: movie?.movie_description,
+            movie_description: movie?.movie_description,
             rating: movie?.movie_rating,
+            movie_rating: movie?.movie_rating,
             img_name: movie?.poster_img,
             img: imgData,
-            type: movie?.booking_movie_type?.movie_type
+            type: movie?.booking_movie_type?.movie_type,
+            category: movie?.booking_movie_type?.movie_type, // 冗餘欄位以相容
+            subtitle: movie?.booking_movie_type?.movie_type  // 冗餘欄位以相容 (與 savedList 一致)
         });
     }
 
