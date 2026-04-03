@@ -51,8 +51,11 @@ barSavedRouter.post(bar.checkBarStatus, async (req, res) => {
         let barIdArray = [];
         if (Array.isArray(barIds)) {
             barIdArray = barIds.map(id => parseInt(id));
-        } else {
+        } else if (typeof barIds === 'string') {
             barIdArray = barIds.split(',').map((id) => parseInt(id.trim()));
+        } else {
+            // 單一數字
+            barIdArray = [parseInt(barIds)];
         }
 
         const results = await checkBarStatus(userId, barIdArray);

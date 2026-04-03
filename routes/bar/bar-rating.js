@@ -6,47 +6,35 @@ import { sendSuccess, sendError } from '../../utils/response-handler.js';
 
 const barRatingRouter = express.Router();
 
-barRatingRouter.get(bar.getBarRating, async (req, res) => {
-    try {
-        const { bar_id } = req.params;
-        const results = await getBarRatingById(bar_id);
-        sendSuccess(res, results);
-    } catch (error) {
-        sendError(res, '伺服器錯誤', 500, error);
-    }
-});
-
+// 1. 取得所有酒吧的評分 (靜態路由優先)
 barRatingRouter.get('/bar-rating', async (req, res) => {
     try {
         const results = await getBarRating();
         sendSuccess(res, results);
     } catch (error) {
-        sendError(res, '伺服器錯誤', 500, error);
+        sendError(res, '取得評分列表失敗', 500, error);
     }
 });
 
-// 取得指定酒吧的評分
-barRatingRouter.get('/bar-rating/:bar_id', async (req, res) => {
+// 2. 取得指定酒吧的評分 (動態參數路由放在後面)
+// 使用 bar.getBarRating (/bar-rating/:bar_id)
+barRatingRouter.get(bar.getBarRating, async (req, res) => {
     try {
         const { bar_id } = req.params;
+        
+        // 額外驗證是否為數字
+        if (isNaN(Number(bar_id))) {
+            return sendSuccess(res, [], '無效的酒吧ID');
+        }
+
         const results = await getBarRatingById(bar_id);
         sendSuccess(res, results);
     } catch (error) {
-        sendError(res, '伺服器錯誤', 500, error);
+        sendError(res, '取得指定酒吧評分失敗', 500, error);
     }
 });
 
-// 取得所有酒吧的评分信息
-barRatingRouter.get('/bar-ratings', async (req, res) => {
-    try {
-        const results = await getBarRating();
-        sendSuccess(res, results);
-    } catch (error) {
-        sendError(res, '伺服器錯誤', 500, error);
-    }
-});
-
-// 新增評分
+// 3. 新增評分
 barRatingRouter.post(bar.createBarRating, authenticate, async (req, res) => {
     const { bar_id, bar_rating_star, user_id } = req.body;
 

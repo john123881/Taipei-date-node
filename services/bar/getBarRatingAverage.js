@@ -1,12 +1,15 @@
 import prisma from '../../utils/prisma-client.js';
 
 export const getBarRatingAverage = async (bar_id) => {
+    const id = Number(bar_id);
+    if (isNaN(id)) return null;
+
     const aggregate = await prisma.bar_rating.aggregate({
         _avg: {
             bar_rating_star: true,
         },
         where: {
-            bar_id: Number(bar_id),
+            bar_id: id,
         },
     });
 

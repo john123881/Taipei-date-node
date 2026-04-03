@@ -26,35 +26,8 @@ export const loginUser = async (email, password) => {
         { expiresIn: '3d' }
     );
 
-    // 檢查今天是否已獲得登入積分
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-
-    const pointsIncCount = await prisma.member_points_inc.count({
-        where: {
-            user_id: user.user_id,
-            reason: '登入獲得',
-            created_at: {
-                gte: today,
-                lt: tomorrow
-            }
-        }
-    });
-
-    let getPointLogin = false;
-    if (pointsIncCount === 0) {
-        await prisma.member_points_inc.create({
-            data: {
-                user_id: user.user_id,
-                points_increase: 10,
-                reason: '登入獲得',
-                created_at: new Date()
-            }
-        });
-        getPointLogin = true;
-    }
+    // 檢查並發放今日登入積分
+    const { getPointLogin } = await grantDailyLoginReward(user.user_id);
 
     return {
         success: true,
@@ -66,6 +39,43 @@ export const loginUser = async (email, password) => {
             getPointLogin
         }
     };
+};
+
+/**
+ * grantDailyLoginReward - 檢查並發放每日登入獎勵
+ * @param {number} sid - 使用者 ID
+ * @returns {object} - { getPointLogin: boolean }
+ */
+export const grantDailyLoginReward = async (sid) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const pointsIncCount = await prisma.member_points_inc.count({
+        where: {
+            user_id: sid,
+            reason: '登入獲得',
+            created_at: {
+                gte: today,
+                lt: tomorrow
+            }
+        }
+    });
+
+    if (pointsIncCount === 0) {
+        await prisma.member_points_inc.create({
+            data: {
+                user_id: sid,
+                points_increase: 10,
+                reason: '登入獲得',
+                created_at: new Date()
+            }
+        });
+        return { getPointLogin: true };
+    }
+
+    return { getPointLogin: false };
 };
 
 export const verifyOtp = async (email, token) => {
@@ -147,12 +157,6 @@ export const googleLogin = async ({ displayName, email, uid, photoURL }) => {
         where: { google_uid: uid }
     });
 
-    let getPointLogin = false;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-
     if (!user) {
         user = await prisma.member_user.create({
             data: {
@@ -164,28 +168,8 @@ export const googleLogin = async ({ displayName, email, uid, photoURL }) => {
         });
     }
 
-    const pointsIncCount = await prisma.member_points_inc.count({
-        where: {
-            user_id: user.user_id,
-            reason: '登入獲得',
-            created_at: {
-                gte: today,
-                lt: tomorrow
-            }
-        }
-    });
-
-    if (pointsIncCount === 0) {
-        await prisma.member_points_inc.create({
-            data: {
-                user_id: user.user_id,
-                points_increase: 10,
-                reason: '登入獲得',
-                created_at: new Date()
-            }
-        });
-        getPointLogin = true;
-    }
+    // 檢查並發放今日登入積分
+    const { getPointLogin } = await grantDailyLoginReward(user.user_id);
 
     const token = jwt.sign(
         { id: user.user_id, email: user.email },

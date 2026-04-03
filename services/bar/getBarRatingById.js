@@ -1,9 +1,12 @@
 import prisma from '../../utils/prisma-client.js';
 
 export const getBarRatingById = async (bar_id) => {
+    const id = Number(bar_id);
+    if (isNaN(id)) return [];
+
     const results = await prisma.bar_rating.findMany({
         where: {
-            bar_id: Number(bar_id),
+            bar_id: id,
         },
         include: {
             bars: {

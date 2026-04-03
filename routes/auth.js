@@ -7,11 +7,9 @@ import {
     createOtpForPassword 
 } from '../utils/otp_service.js';
 import {
-    loginUser,
-    verifyOtp,
-    registerUser,
     updatePasswordByOtp,
-    googleLogin
+    googleLogin,
+    grantDailyLoginReward
 } from '../services/index.js';
 import prisma from '../utils/prisma-client.js';
 import { sendSuccess, sendError } from '../utils/response-handler.js';
@@ -37,6 +35,9 @@ authRouter.get('/login-check', authenticate, cacheAsync(async (req, res) => {
     if (!user) {
         return sendError(res, '沒有此user_id', 404);
     }
+
+    // 確保持久登入用戶在跨日後的第一次 checkAuth 也能拿到積分
+    await grantDailyLoginReward(jid);
 
     sendSuccess(res, null, '確認成功，有Token，UserID也符合');
 }));
