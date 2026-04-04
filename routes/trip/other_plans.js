@@ -2,7 +2,7 @@ import express from 'express';
 import { trip } from '../apiConfig.js';
 import { getOtherPlans } from '../../services/index.js';
 import authenticate from '../../middlewares/authenticate.js';
-import { sendSuccess, sendError } from '../../utils/response-handler.js';
+import { sendSuccess, sendError, sendPagination } from '../../utils/response-handler.js';
 
 const router = express.Router();
 
@@ -11,9 +11,16 @@ router.get(trip.getOtherPlans, authenticate, async (req, res) => {
         return sendError(res, '沒授權', 401);
     }
     const user_id = req.my_jwt.id;
+    const { page = 1, limit = 10 } = req.query;
+
     try {
-        const results = await getOtherPlans(user_id);
-        sendSuccess(res, results);
+        const { data, total, totalPages } = await getOtherPlans(user_id, page, limit);
+        sendPagination(res, data, {
+            total,
+            page: Number(page),
+            limit: Number(limit),
+            totalPages
+        });
     } catch (error) {
         sendError(res, 'Error fetching plans', 500, error);
     }

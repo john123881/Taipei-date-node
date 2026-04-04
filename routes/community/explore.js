@@ -9,7 +9,8 @@ router.get(community.getRandomPosts, async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 12;
-        const results = await getRandomPosts(page, limit);
+        const seed = req.query.seed || null;
+        const results = await getRandomPosts(page, limit, seed);
         sendSuccess(res, results);
     } catch (error) {
         sendError(res, '伺服器錯誤', 500, error);

@@ -9,7 +9,10 @@ import {
 import {
     updatePasswordByOtp,
     googleLogin,
-    grantDailyLoginReward
+    grantDailyLoginReward,
+    loginUser,
+    registerUser,
+    verifyOtp
 } from '../services/index.js';
 import prisma from '../utils/prisma-client.js';
 import { sendSuccess, sendError } from '../utils/response-handler.js';

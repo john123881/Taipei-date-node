@@ -8,8 +8,8 @@ const router = express.Router();
 router.post(trip.editDnN, async (req, res) => {
     try {
         const { trip_plan_id } = req.params;
-        const { trip_description, trip_notes } = req.body;
-        const result = await editDnN(trip_plan_id, trip_description, trip_notes);
+        const { trip_description, trip_notes, trip_title, trip_date } = req.body;
+        const result = await editDnN(trip_plan_id, trip_description, trip_notes, trip_title, trip_date);
         if (result) {
             sendSuccess(res, result, '行程描述與備註更新成功');
         } else {
