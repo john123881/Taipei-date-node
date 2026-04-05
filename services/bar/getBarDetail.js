@@ -27,6 +27,7 @@ export const getBarDetail = async () => {
             bar_type_name: bar.bar_type?.bar_type_name,
             bar_pic_id: firstPic?.bar_pic_id,
             bar_pic_name: firstPic?.bar_pic_name,
+            bar_img_url: firstPic?.bar_img_url,
             img: imgSource,
         };
     });

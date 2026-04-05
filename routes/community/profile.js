@@ -3,6 +3,8 @@ import { community } from '../apiConfig.js';
 import {
     getPosts,
     getUserPosts,
+    getEventsByUser,
+    getEventsCountByUserId,
     getFollows,
     getCountPosts,
     getUserInfo,
@@ -45,6 +47,20 @@ router.get(community.getUserPosts, validate(getUserPostsSchema), async (req, res
     }
 });
 
+router.get(community.getUserEvents, validate(getUserPostsSchema), async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 12;
+        const results = await getEventsByUser(userId, page, limit);
+
+        sendSuccess(res, results || []);
+    } catch (error) {
+        console.error('[Route Error] getUserEvents:', error);
+        sendError(res, '獲取活動失敗', 500, error.message);
+    }
+});
+
 router.get(community.getFollows, validate(getUserPostsSchema), async (req, res) => {
     try {
         const { userId } = req.params;
@@ -64,6 +80,17 @@ router.get(community.getCountPosts, validate(getUserPostsSchema), async (req, re
     } catch (error) {
         console.error('[Route Error] getCountPosts:', error);
         sendError(res, '獲取貼文數量失敗', 500, error.message);
+    }
+});
+
+router.get(community.getCountEvents, validate(getUserPostsSchema), async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const results = await getEventsCountByUserId(userId);
+        sendSuccess(res, results);
+    } catch (error) {
+        console.error('[Route Error] getCountEvents:', error);
+        sendError(res, '獲取活動數量失敗', 500, error.message);
     }
 });
 

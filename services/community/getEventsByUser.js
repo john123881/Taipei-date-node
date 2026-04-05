@@ -1,25 +1,17 @@
 import prisma from '../../utils/prisma-client.js';
-import dayjs from 'dayjs';
-import { uploadToS3 } from '../../utils/s3-core.js';
 import { transformImgSource } from '../../utils/image-helpers.js';
+import dayjs from 'dayjs';
 
-export const uploadEventPhoto = async (photoName, eventId, imageData) => {
-    // 1. 上傳到 S3
-    const s3Url = await uploadToS3(imageData, photoName, 'events');
-
-    // 2. 存入資料庫
-    await prisma.comm_events_photo.create({
-        data: {
-            photo_name: photoName,
-            comm_event_id: Number(eventId),
-            img: Buffer.alloc(0),
-            img_url: s3Url,
-        },
-    });
-
-    const event = await prisma.comm_events.findUnique({
+export const getEventsByUser = async (userId, page = 1, limit = 12) => {
+    const skip = (Number(page) - 1) * Number(limit);
+    const results = await prisma.comm_events.findMany({
         where: {
-            comm_event_id: Number(eventId),
+            user_id: Number(userId),
+        },
+        take: Number(limit),
+        skip: skip,
+        orderBy: {
+            comm_event_id: 'desc',
         },
         include: {
             comm_events_photo: {
@@ -32,10 +24,10 @@ export const uploadEventPhoto = async (photoName, eventId, imageData) => {
         },
     });
 
-    if (event) {
-        const startDateFormat = 'YYYY[年] MM[月]DD[日]';
-        const endDateFormat = 'YYYY[年] MM[月]DD[日]';
+    const startDateFormat = 'YYYY[年] MM[月]DD[日]';
+    const endDateFormat = 'YYYY[年] MM[月]DD[日]';
 
+    return results.map((event) => {
         const photo = event.comm_events_photo[0];
         const imgSource = transformImgSource(photo);
 
@@ -47,8 +39,7 @@ export const uploadEventPhoto = async (photoName, eventId, imageData) => {
             end_time: event.end_time ? dayjs(event.end_time).format('HH:mm') : null,
             photo_name: photo?.photo_name,
             img: imgSource,
+            type: 'event',
         };
-    }
-
-    return null;
+    });
 };

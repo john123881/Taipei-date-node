@@ -4,8 +4,8 @@ export const searchUsers = async (searchTerm) => {
     const results = await prisma.member_user.findMany({
         where: {
             OR: [
-                { email: { startsWith: searchTerm } },
-                { username: { startsWith: searchTerm } },
+                { email: { contains: searchTerm } },
+                { username: { contains: searchTerm } },
             ],
         },
         select: {

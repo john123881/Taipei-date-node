@@ -8,7 +8,7 @@ export const getEvents = async (page = 1, limit = 12) => {
         take: Number(limit),
         skip: skip,
         orderBy: {
-            start_date: 'asc',
+            comm_event_id: 'desc',
         },
         include: {
             comm_events_photo: {
@@ -36,6 +36,7 @@ export const getEvents = async (page = 1, limit = 12) => {
             end_time: event.end_time ? dayjs(event.end_time).format('HH:mm') : null,
             photo_name: photo?.photo_name,
             img: imgSource,
+            type: 'event',
         };
     });
 };

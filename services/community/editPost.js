@@ -1,4 +1,5 @@
 import prisma from '../../utils/prisma-client.js';
+import { transformImgSource } from '../../utils/image-helpers.js';
 
 export const editPost = async (context, postId) => {
     const updatedPost = await prisma.comm_post.update({
@@ -27,6 +28,7 @@ export const editPost = async (context, postId) => {
                 select: {
                     photo_name: true,
                     img: true,
+                    img_url: true,
                 },
             },
         },
@@ -34,10 +36,7 @@ export const editPost = async (context, postId) => {
 
     if (post) {
         const photo = post.comm_photo[0];
-        let imgSource = null;
-        if (photo && photo.img) {
-            imgSource = `data:image/jpeg;base64,${Buffer.from(photo.img).toString('base64')}`;
-        }
+        const imgSource = transformImgSource(photo);
 
         return {
             post_id: post.post_id,
