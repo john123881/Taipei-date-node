@@ -74,6 +74,7 @@ const community = {
     getFollowings: '/get-followings/:followerId',
     getNoti: '/get-noti/:userId',
     markNotiAsRead: '/mark-noti-as-read/:notiId',
+    editComment: '/edit-comment',
 };
 
 const bar = {

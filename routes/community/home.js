@@ -11,6 +11,7 @@ import {
     checkPostStatus,
     deletePost,
     deleteComment,
+    editComment,
     getPostsByKeyword,
     getNoti,
     markNotiAsRead,
@@ -23,7 +24,8 @@ import {
     postInteractionSchema,
     checkPostStatusSchema,
     deletePostSchema,
-    deleteCommentSchema 
+    deleteCommentSchema,
+    editCommentSchema 
 } from '../../schemas/community.js';
 import { sendSuccess, sendError } from '../../utils/response-handler.js';
 
@@ -45,7 +47,8 @@ router.get(community.getPosts, async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 12;
-        const results = await getPosts(page, limit);
+        const seed = req.query.seed || null;
+        const results = await getPosts(page, limit, seed);
         sendSuccess(res, results);
     } catch (error) {
         console.error('getPosts error:', error);
@@ -153,6 +156,17 @@ router.delete(community.deleteComment, authenticate, validate(deleteCommentSchem
         sendSuccess(res, results, '刪除留言成功');
     } catch (err) {
         sendError(res, '刪除留言失敗', 500, err);
+    }
+});
+
+router.put(community.editComment, authenticate, validate(editCommentSchema), async (req, res) => {
+    const { commentId, context } = req.body;
+
+    try {
+        const results = await editComment(commentId, context);
+        sendSuccess(res, results, '修改留言成功');
+    } catch (err) {
+        sendError(res, '修改留言失敗', 500, err);
     }
 });
 

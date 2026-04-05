@@ -6,7 +6,7 @@ export const getRandomPosts = async (page = 1, limit = 12, seed = null) => {
     
     // 如果沒有提供 seed，則使用當前的日期作為種子 (或是由前端傳入)
     // 這樣在同一天/同一次會話中，隨機順序是固定的
-    const finalSeed = seed !== null ? Number(seed) : Math.floor(Date.now() / 3600000); // 每一小時更換一次預設種子
+    const finalSeed = (seed !== null && seed !== undefined) ? Number(seed) : Math.floor(Date.now() / 3600000); // 每一小時更換一次預設種子
 
     // queryRaw handles RAND() which is not native to Prisma
     const results = await prisma.$queryRaw`

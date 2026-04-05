@@ -220,7 +220,7 @@ model comm_comment {
   post_id         Int
   user_id         Int
   comm_post       comm_post   @relation(fields: [post_id], references: [post_id], onDelete: Cascade, map: "comm_comment_ibfk_1")
-  member_user     member_user @relation(fields: [user_id], references: [user_id], onDelete: Cascade, map: "comm_comment_ibfk_2")
+  member_user     member_user? @relation(fields: [user_id], references: [user_id], onDelete: Cascade, map: "comm_comment_ibfk_2")
 
   @@index([post_id], map: "comm_comment_ibfk_1")
   @@index([user_id], map: "comm_comment_ibfk_2")

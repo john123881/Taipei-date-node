@@ -24,9 +24,9 @@ export const createEvent = async (
             location,
             user_id: Number(userId),
             start_date: new Date(startDate),
-            start_time: startTime, // Assuming string format works or handle appropriately
+            start_time: startTime ? dayjs(`${startDate} ${startTime}`).toDate() : null,
             end_date: new Date(endDate),
-            end_time: endTime,
+            end_time: endTime ? dayjs(`${endDate} ${endTime}`).toDate() : null,
         },
     });
 

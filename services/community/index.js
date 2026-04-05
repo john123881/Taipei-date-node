@@ -18,6 +18,7 @@ export * from './unlikePost.js';
 export * from './savePost.js';
 export * from './unsavePost.js';
 export * from './addComment.js';
+export * from './editComment.js';
 export * from './getComments.js';
 export * from './deleteComment.js';
 

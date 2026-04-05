@@ -77,6 +77,13 @@ export const deleteCommentSchema = z.object({
     }),
 });
 
+export const editCommentSchema = z.object({
+    body: z.object({
+        commentId: z.union([z.string(), z.number()]).transform(val => Number(val)).refine(val => !isNaN(val)),
+        context: z.string().min(1, '留言內容不能為空'),
+    }),
+});
+
 // 新增：搜尋使用者驗證
 export const searchUsersSchema = z.object({
     query: z.object({
@@ -89,6 +96,10 @@ export const getUserPostsSchema = z.object({
     params: z.object({
         userId: z.string().transform(val => parseInt(val, 10)).refine(val => !isNaN(val), { message: 'userId 必須為數字' }),
     }),
+    query: z.object({
+        page: z.string().optional().transform(val => val ? parseInt(val, 10) : 1),
+        limit: z.string().optional().transform(val => val ? parseInt(val, 10) : 12),
+    }).optional(),
 });
 
 // 新增：單筆貼文/活動驗證

@@ -20,9 +20,9 @@ export const editEvent = async (
             description,
             location,
             start_date: new Date(startDate),
-            start_time: startTime,
+            start_time: startTime ? dayjs(`${startDate} ${startTime}`).toDate() : null,
             end_date: new Date(endDate),
-            end_time: endTime,
+            end_time: endTime ? dayjs(`${endDate} ${endTime}`).toDate() : null,
             updated_at: new Date(),
         },
     });
