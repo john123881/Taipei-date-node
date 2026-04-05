@@ -24,6 +24,7 @@ export * from './deleteComment.js';
 
 // Event Management
 export * from './getEvents.js';
+export * from './getEventsByUser.js';
 export * from './getEventsCountByUserId.js';
 export * from './createEvent.js';
 export * from './editEvent.js';
