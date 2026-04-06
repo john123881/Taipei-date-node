@@ -8,6 +8,7 @@ import {
     checkEventStatus,
     deleteEvent,
     getEventPage,
+    getParticipants,
 } from '../../services/index.js';
 import authenticate from '../../middlewares/authenticate.js';
 import { validate } from '../../middlewares/validate.js';
@@ -25,7 +26,8 @@ router.get(community.getEvents, async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 12;
-        const results = await getEvents(page, limit);
+        const seed = req.query.seed || null;
+        const results = await getEvents(page, limit, seed);
         sendSuccess(res, results);
     } catch (error) {
         sendError(res, '伺服器錯誤', 500, error);
@@ -100,6 +102,17 @@ router.get(community.getEventPage, validate(getEventPageSchema), async (req, res
     } catch (error) {
         console.error('[Route Error] getEventPage:', error);
         sendError(res, '獲取活動詳情時發生錯誤', 500, error.message);
+    }
+});
+
+router.get(community.getParticipants, async (req, res) => {
+    const { eventId } = req.params;
+    try {
+        const results = await getParticipants(eventId);
+        sendSuccess(res, results);
+    } catch (error) {
+        console.error('[Route Error] getParticipants:', error);
+        sendError(res, '獲取活動參與者時發生錯誤', 500, error.message);
     }
 });
 

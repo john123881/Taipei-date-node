@@ -21,6 +21,7 @@ export * from './addComment.js';
 export * from './editComment.js';
 export * from './getComments.js';
 export * from './deleteComment.js';
+export * from './getParticipants.js';
 
 // Event Management
 export * from './getEvents.js';

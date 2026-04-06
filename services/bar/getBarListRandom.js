@@ -22,7 +22,7 @@ export const getBarListRandom = async () => {
             bar_pic bp ON b.bar_id = bp.bar_id
         ORDER BY 
             RAND()
-        LIMIT 3
+        LIMIT 15
     `;
 
     // 將 BLOB 數據轉換為 Base64 字符串

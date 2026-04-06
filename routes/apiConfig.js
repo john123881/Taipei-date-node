@@ -1,4 +1,4 @@
-const trip = {
+ const trip = {
     getPlans: '/trip-plans',
     createPlansAndCalendar: '/trip-plans/add',
     deletePlans: '/trip-plans/delete/:trip_plan_id',
@@ -38,7 +38,7 @@ const community = {
     getPosts: '/posts',
     getPostPage: '/get-post-page/:postId',
     getUserPosts: '/posts/:userId',
-    getUserEvents: '/events/:userId',
+    getUserEvents: '/get-user-events/:userId',
     uploadPhoto: '/upload-photo',
     getSuggestUsers: '/getSuggestUsers',
     createPost: '/create-post',
@@ -77,6 +77,7 @@ const community = {
     getNoti: '/get-noti/:userId',
     markNotiAsRead: '/mark-noti-as-read/:notiId',
     editComment: '/edit-comment',
+    getParticipants: '/get-participants/:eventId',
 };
 
 const bar = {
