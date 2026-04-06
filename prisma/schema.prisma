@@ -265,6 +265,7 @@ model comm_follows {
   follower        member_user @relation("follower", fields: [follower_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction, map: "comm_follows_ibfk_1")
   following       member_user @relation("following", fields: [following_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction, map: "comm_follows_ibfk_2")
 
+  @@unique([follower_id, following_id], map: "comm_follows_id")
   @@index([follower_id], map: "comm_follows_ibfk_1")
   @@index([following_id], map: "comm_follows_ibfk_2")
 }
