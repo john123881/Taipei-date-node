@@ -11,10 +11,6 @@ export const loginUser = async (email, password) => {
         return { success: false, error: '無相關帳號', code: 420 };
     }
 
-    if (user.google_uid !== null) {
-        return { success: false, error: '此電子郵件已使用Google登入註冊過，請更換Google帳號登入' };
-    }
-
     const result = await bcrypt.compare(password.trim(), user.password_hash);
     if (!result) {
         return { success: false, error: '密碼有錯誤', code: 450 };
@@ -35,8 +31,10 @@ export const loginUser = async (email, password) => {
             id: user.user_id,
             email: user.email,
             username: user.username,
+            avatar: user.avatar,
             token,
-            getPointLogin
+            getPointLogin,
+            hasPassword: !!user.password_hash
         }
     };
 };
@@ -80,7 +78,7 @@ export const grantDailyLoginReward = async (sid) => {
 
 export const verifyOtp = async (email, token) => {
     const otpRecord = await prisma.otp.findFirst({
-        where: { email: email.trim(), token: token.trim() }
+        where: { email: email.trim(), token: Number(token) }
     });
 
     if (!otpRecord) {
@@ -117,7 +115,14 @@ export const registerUser = async (username, email, password) => {
         where: { email: email.trim() }
     });
 
-    return { success: true, data: { username: newUser.username, email: newUser.email } };
+    return { 
+        success: true, 
+        data: { 
+            username: newUser.username, 
+            email: newUser.email,
+            hasPassword: true 
+        } 
+    };
 };
 
 export const updatePasswordByOtp = async (email, password) => {
@@ -129,13 +134,12 @@ export const updatePasswordByOtp = async (email, password) => {
         return { success: false, error: '無此電子郵件' };
     }
 
-    if (user.google_uid !== null) {
-        return { success: false, error: '綁定google登入之電子郵件不適用' };
-    }
-
-    const isOldPassword = await bcrypt.compare(password.trim(), user.password_hash);
-    if (isOldPassword) {
-        return { success: false, error: '錯誤 - 新密碼不可與舊密碼相同', code: 450 };
+    // 檢查新密碼是否與舊密碼相同 (僅當舊密碼存在時)
+    if (user.password_hash) {
+        const isOldPassword = await bcrypt.compare(password.trim(), user.password_hash);
+        if (isOldPassword) {
+            return { success: false, error: '錯誤 - 新密碼不可與舊密碼相同', code: 450 };
+        }
     }
 
     const password_hash = await bcrypt.hash(password.trim(), 12);
@@ -153,19 +157,38 @@ export const updatePasswordByOtp = async (email, password) => {
 };
 
 export const googleLogin = async ({ displayName, email, uid, photoURL }) => {
+    // 1. 先查是否有此 Google UID
     let user = await prisma.member_user.findFirst({
         where: { google_uid: uid }
     });
 
     if (!user) {
-        user = await prisma.member_user.create({
-            data: {
-                google_uid: uid,
-                username: displayName || 'Google User',
-                email: email,
-                avatar: photoURL
-            }
+        // 2. 沒找到 UID，改查 Email 是否已存在（手動註冊帳號）
+        user = await prisma.member_user.findFirst({
+            where: { email: email.trim() }
         });
+
+        if (user) {
+            // 3. 發現同 Email 帳號，執行綁定 (Account Linking)
+            user = await prisma.member_user.update({
+                where: { user_id: user.user_id },
+                data: { 
+                    google_uid: uid,
+                    // 如果原帳號沒有頭像或使用預設圖，則更新為 Google 頭像
+                    avatar: user.avatar && !user.avatar.includes('defaultAvatar') ? user.avatar : photoURL
+                }
+            });
+        } else {
+            // 4. 全新用戶，建立帳號
+            user = await prisma.member_user.create({
+                data: {
+                    google_uid: uid,
+                    username: displayName || 'Google User',
+                    email: email,
+                    avatar: photoURL
+                }
+            });
+        }
     }
 
     // 檢查並發放今日登入積分
@@ -186,7 +209,8 @@ export const googleLogin = async ({ displayName, email, uid, photoURL }) => {
             email: user.email,
             avatar: user.avatar,
             token,
-            getPointLogin
+            getPointLogin,
+            hasPassword: !!user.password_hash
         }
     };
 };

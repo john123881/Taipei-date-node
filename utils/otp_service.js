@@ -29,7 +29,7 @@ const createOtpForRegister = async (email, exp = 30, limit = 60) => {
         const updatedOtp = await prisma.otp.update({
             where: { otp_id: otpRecord.otp_id },
             data: {
-                token: token,
+                token: Number(token),
                 exp_timestamp: exp_timestamp
             }
         });
@@ -42,7 +42,7 @@ const createOtpForRegister = async (email, exp = 30, limit = 60) => {
         const newOtp = await prisma.otp.create({
             data: {
                 email: email,
-                token: token,
+                token: Number(token),
                 exp_timestamp: exp_timestamp
             }
         });
@@ -73,7 +73,7 @@ const createOtpForPassword = async (email, userId, exp = 30, limit = 60) => {
             where: { otp_id: otpRecord.otp_id },
             data: {
                 user_id: userId,
-                token: token,
+                token: Number(token),
                 exp_timestamp: exp_timestamp
             }
         });
@@ -87,7 +87,7 @@ const createOtpForPassword = async (email, userId, exp = 30, limit = 60) => {
             data: {
                 user_id: userId,
                 email: email,
-                token: token,
+                token: Number(token),
                 exp_timestamp: exp_timestamp
             }
         });

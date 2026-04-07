@@ -29,7 +29,9 @@ export const getProfile = async (sid) => {
     const avatar = transformImgSource(user, { imgKey: 'avatar', urlKey: 'avatar' });
 
     return {
+        id: user.user_id, // 確保前端使用的 id 欄位存在
         ...userWithoutPassword,
+        hasPassword: !!password_hash,
         avatar,
         bar_type_name: user.bar_type?.bar_type_name || null,
         movie_type: user.movie_type?.movie_type || null,
