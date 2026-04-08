@@ -31,6 +31,7 @@ export const getPostsByKeywordSchema = z.object({
         keyword: z.string({ required_error: '必須提供關鍵字' }).min(1, '關鍵字不能為空').trim(),
         page: z.string().optional().transform(val => val ? parseInt(val, 10) : 1),
         limit: z.string().optional().transform(val => val ? parseInt(val, 10) : 12),
+        seed: z.string().optional().transform(val => val ? parseInt(val, 10) : null),
     }),
 });
 

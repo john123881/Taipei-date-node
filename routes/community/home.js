@@ -33,9 +33,9 @@ const router = express.Router();
 
 router.get(community.getPostsByKeyword, validate(getPostsByKeywordSchema), async (req, res) => {
     try {
-        const { keyword, page, limit } = req.query;
+        const { keyword, page, limit, seed } = req.query;
 
-        const results = await getPostsByKeyword(keyword, page, limit);
+        const results = await getPostsByKeyword(keyword, page, limit, seed);
         sendSuccess(res, results);
     } catch (error) {
         console.error('[Route Error] getPostsByKeyword:', error);
