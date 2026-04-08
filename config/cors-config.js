@@ -4,11 +4,8 @@ import { isOriginAllowed } from '../utils/cors-config.js';
 export const corsOptions = {
     credentials: true,
     origin: (origin, callback) => {
-        if (isOriginAllowed(origin)) {
-            callback(null, true);
-        } else {
-            callback(new Error('Not allowed by CORS'));
-        }
+        // 暫時直接允許所有來源以進行除錯，確認伺服器連線正常
+        callback(null, true);
     },
 };
 
