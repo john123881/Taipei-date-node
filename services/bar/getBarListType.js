@@ -3,10 +3,10 @@ import { transformImgSource } from '../../utils/image-helpers.js';
 
 // 獲取所有酒吧列表
 export const getBarListType = async (bar_type_id) => {
+    const typeId = Number(bar_type_id);
+    
     const results = await prisma.bars.findMany({
-        where: {
-            bar_type_id: Number(bar_type_id),
-        },
+        where: !isNaN(typeId) ? { bar_type_id: typeId } : {},
         include: {
             bar_area: true,
             bar_type: true,

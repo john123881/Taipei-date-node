@@ -5,15 +5,15 @@ export const searchBars = async (searchTerm) => {
     const results = await prisma.bars.findMany({
         where: {
             OR: [
-                { bar_name: { startsWith: searchTerm } },
+                { bar_name: { contains: searchTerm } },
                 {
                     bar_area: {
-                        bar_area_name: { startsWith: searchTerm },
+                        bar_area_name: { contains: searchTerm },
                     },
                 },
                 {
                     bar_type: {
-                        bar_type_name: { startsWith: searchTerm },
+                        bar_type_name: { contains: searchTerm },
                     },
                 },
             ],

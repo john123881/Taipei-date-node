@@ -5,9 +5,12 @@ export const getFilteredBarList = async (filters = {}) => {
     
     let where = {};
     
-    // 基礎篩選
-    if (bar_area_id) where.bar_area_id = Number(bar_area_id);
-    if (bar_type_id) where.bar_type_id = Number(bar_type_id);
+    // 基礎篩選 (加強型別安全性)
+    const areaId = Number(bar_area_id);
+    const typeId = Number(bar_type_id);
+
+    if (bar_area_id && !isNaN(areaId)) where.bar_area_id = areaId;
+    if (bar_type_id && !isNaN(typeId)) where.bar_type_id = typeId;
 
     // 關鍵字搜尋 (如果有的話)
     if (searchTerm) {
