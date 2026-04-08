@@ -21,6 +21,15 @@ export const getOtherPlans = async (user_id, page = 1, limit = 10) => {
                         not: Number(user_id),
                     },
                 },
+                include: {
+                    trip_details: true,
+                    member_user: {
+                        select: {
+                            username: true,
+                            avatar: true,
+                        },
+                    },
+                },
                 skip,
                 take,
                 orderBy: {

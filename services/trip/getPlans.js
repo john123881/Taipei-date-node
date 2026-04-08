@@ -6,6 +6,18 @@ export const getPlans = async (user_id) => {
             where: {
                 user_id: Number(user_id),
             },
+            include: {
+                trip_details: true,
+                member_user: {
+                    select: {
+                        username: true,
+                        avatar: true,
+                    },
+                },
+            },
+            orderBy: {
+                trip_plan_id: 'desc',
+            },
         });
     } catch (error) {
         console.error('Error fetching trip plans:', error);
