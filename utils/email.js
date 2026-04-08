@@ -16,14 +16,14 @@ const transporter = nodemailer.createTransport({
     },
 });
 
-// // 驗証連線設定
-// transporter.verify((error, success) => {
-//     if (error) {
-//         logger.error('SMTP server connection failed', error);
-//     } else {
-//         logger.info('SMTP server connected');
-//     }
-// });
+// 驗証連線設定
+transporter.verify((error, success) => {
+    if (error) {
+        logger.error('SMTP server connection failed', error);
+    } else {
+        logger.info('SMTP server connected');
+    }
+});
 
 // 測試發信
 // transporter

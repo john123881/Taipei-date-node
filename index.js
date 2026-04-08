@@ -36,10 +36,6 @@ const app = express();
 app.set('view engine', 'ejs');
 
 // --- Top-level Middlewares ---
-app.use((req, res, next) => {
-    logger.info(`[DEBUG] Incoming Request: ${req.method} ${req.url} - Origin: ${req.headers.origin}`);
-    next();
-});
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cookieParser());
