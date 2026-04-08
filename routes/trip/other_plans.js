@@ -11,10 +11,10 @@ router.get(trip.getOtherPlans, authenticate, async (req, res) => {
         return sendError(res, '沒授權', 401);
     }
     const user_id = req.my_jwt.id;
-    const { page = 1, limit = 10 } = req.query;
+    const { page = 1, limit = 10, keyword = '' } = req.query;
 
     try {
-        const { data, total, totalPages } = await getOtherPlans(user_id, page, limit);
+        const { data, total, totalPages } = await getOtherPlans(user_id, page, limit, keyword);
         sendPagination(res, data, {
             total,
             page: Number(page),
