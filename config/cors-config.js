@@ -5,6 +5,7 @@ export const corsOptions = {
     credentials: true,
     origin: (origin, callback) => {
         // 暫時直接允許所有來源以進行除錯，確認伺服器連線正常
+        console.log(`[CORS DEBUG] Origin: ${origin}`);
         callback(null, true);
     },
 };
