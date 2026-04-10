@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import prisma from '../../utils/prisma-client.js';
 import { transformImgSource } from '../../utils/image-helpers.js';
 import dayjs from 'dayjs';
@@ -6,7 +7,21 @@ export const getPostsByKeyword = async (keyword, page = 1, limit = 12, seed = nu
     const offset = (Number(page) - 1) * Number(limit);
     const finalSeed = (seed !== null && seed !== undefined) ? Number(seed) : Math.floor(Date.now() / 3600000);
 
-    // 同時查詢貼文與活動，使用 queryRaw 進行隨機排序
+    // 處理多關鍵字 (以空格分割，採用 AND 邏輯)
+    const keywords = keyword.trim().split(/\s+/).filter(k => k.length > 0);
+    
+    // 如果沒有關鍵字，直接回傳空陣列
+    if (keywords.length === 0) return [];
+
+    // 構建貼文的動態條件 (搜尋內文與使用者名稱)
+    const postConditions = keywords.map(k => Prisma.sql`(p.context LIKE ${`%${k}%`} OR u.username LIKE ${`%${k}%`})`);
+    const postWhereClause = Prisma.sql`WHERE ${Prisma.join(postConditions, ' AND ')}`;
+
+    // 構建活動的動態條件 (搜尋標題、描述、地點)
+    const eventConditions = keywords.map(k => Prisma.sql`(e.title LIKE ${`%${k}%`} OR e.description LIKE ${`%${k}%`} OR e.location LIKE ${`%${k}%`})`);
+    const eventWhereClause = Prisma.sql`WHERE ${Prisma.join(eventConditions, ' AND ')}`;
+
+    // 同時查詢貼文與活動，使用 $queryRaw 進行隨機排序
     const [posts, events] = await Promise.all([
         prisma.$queryRaw`
             SELECT 
@@ -24,14 +39,16 @@ export const getPostsByKeyword = async (keyword, page = 1, limit = 12, seed = nu
                     GROUP BY post_id
                 ) cp2 ON cp1.post_id = cp2.post_id AND cp1.comm_photo_id = cp2.min_id
             ) ph ON p.post_id = ph.post_id
-            WHERE p.context LIKE ${`%${keyword}%`}
+            ${postWhereClause}
             ORDER BY RAND(${finalSeed})
             LIMIT ${Number(limit)} OFFSET ${offset}`,
         prisma.$queryRaw`
             SELECT 
                 e.*,
+                u.email, u.username, u.avatar,
                 ph.photo_name, ph.img, ph.img_url
             FROM comm_events e
+            LEFT JOIN member_user u ON e.user_id = u.user_id
             LEFT JOIN (
                 SELECT ep1.comm_event_id, ep1.photo_name, ep1.img, ep1.img_url
                 FROM comm_events_photo ep1
@@ -41,9 +58,7 @@ export const getPostsByKeyword = async (keyword, page = 1, limit = 12, seed = nu
                     GROUP BY comm_event_id
                 ) ep2 ON ep1.comm_event_id = ep2.comm_event_id AND ep1.comm_events_photo_id = ep2.min_id
             ) ph ON e.comm_event_id = ph.comm_event_id
-            WHERE e.title LIKE ${`%${keyword}%`}
-               OR e.description LIKE ${`%${keyword}%`}
-               OR e.location LIKE ${`%${keyword}%`}
+            ${eventWhereClause}
             ORDER BY RAND(${finalSeed})
             LIMIT ${Number(limit)} OFFSET ${offset}`
     ]);

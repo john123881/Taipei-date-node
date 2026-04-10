@@ -21,11 +21,18 @@ export const getEvents = async (page = 1, limit = 12, seed = null) => {
             e.end_time,
             e.status,
             e.user_id,
+            u.username,
+            u.avatar,
+            u.email,
             p.photo_name,
             p.img,
             p.img_url
         FROM 
             comm_events AS e
+        LEFT JOIN 
+            member_user AS u
+        ON 
+            e.user_id = u.user_id
         LEFT JOIN 
             comm_events_photo AS p
         ON 
