@@ -1,4 +1,4 @@
-import 'dotenv/config'; // <--- 在第一行加入這句，確保環境變數在連線池建立前就加載
+import 'dotenv/config';
 import mysql from 'mysql2/promise';
 
 // const {
@@ -12,16 +12,6 @@ import mysql from 'mysql2/promise';
 //     JAWSDB_NAME,
 // } = process.env;
 
-// console.log({
-//     DB_HOST,
-//     DB_USER,
-//     DB_PASS,
-//     DB_NAME,
-//     JAWSDB_HOST,
-//     JAWSDB_USER,
-//     JAWSDB_PASS,
-//     JAWSDB_NAME,
-// });
 
 const db = mysql.createPool({
     host: process.env.DB_HOST,
@@ -29,10 +19,12 @@ const db = mysql.createPool({
     password: process.env.DB_PASS,
     database: process.env.DB_NAME,
     port: process.env.DB_PORT || 3306,
-    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+    ssl: { rejectUnauthorized: false }, 
     waitForConnections: true,
-    connectionLimit: 5,
+    connectionLimit: 10, // 適度增加連線數
     queueLimit: 0,
+    enableKeepAlive: true, // 重要：防止 ECONNRESET
+    keepAliveInitialDelay: 10000, // 10秒發送一次心跳
 });
 
 export default db;
