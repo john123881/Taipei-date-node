@@ -106,8 +106,8 @@ model bars {
   bar_contact      String?        @db.VarChar(255)
   bar_description  String?        @db.VarChar(255)
   bar_type_id      Int
-  bar_latitude     Float          @db.Float
-  bar_longtitude   Float          @db.Float
+  latitude         Decimal        @db.Decimal(10, 8)
+  longitude        Decimal        @db.Decimal(11, 8)
   bar_booking      bar_booking[]
   bar_pic          bar_pic[]
   bar_rating       bar_rating[]
