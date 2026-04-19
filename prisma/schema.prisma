@@ -17,6 +17,7 @@ model admin_user {
   google_avatar_url   String? @default("") @db.VarChar(255)
   avatar_img          Bytes?  @db.MediumBlob
   avatar_url          String? @db.VarChar(512)
+  admin_config        Json?   @default("{}")
 }
 
 model bar_area {

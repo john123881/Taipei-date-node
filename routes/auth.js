@@ -19,6 +19,7 @@ import prisma from '../utils/prisma-client.js';
 import { sendSuccess, sendError } from '../utils/response-handler.js';
 import cacheAsync from '../utils/catch-async.js';
 import { getOtpEmailHtml } from '../utils/email-template.js';
+import { notifyAdmin } from '../utils/admin-notifier.js';
 
 const authRouter = express.Router();
 
@@ -61,6 +62,10 @@ authRouter.post('/login', cacheAsync(async (req, res) => {
             sameSite: 'None',
             maxAge: 3 * 24 * 60 * 60 * 1000,
         });
+        
+        // 發送管理員通知 (非同步)
+        notifyAdmin('LOGIN', { email, ip: req.ip });
+
         sendSuccess(res, result.data, result.message || '登入成功');
     } else {
         sendError(res, result.message || result.error || '登入失敗', 401, null, result.code);
@@ -113,6 +118,9 @@ authRouter.post('/register', cacheAsync(async (req, res) => {
 
     const result = await registerUser(username, email, password);
     if (result.success) {
+        // 發送管理員通知 (非同步)
+        notifyAdmin('REGISTER', { email, username });
+
         sendSuccess(res, result.data, result.message);
     } else {
         sendError(res, result.message || result.error || '註冊失敗', 400);
@@ -186,6 +194,10 @@ authRouter.post('/google-login', cacheAsync(async (req, res) => {
             sameSite: 'None',
             maxAge: 3 * 24 * 60 * 60 * 1000,
         });
+
+        // 發送管理員通知 (非同步)
+        notifyAdmin('GOOGLE_LOGIN', { email: result.data.email, ip: req.ip });
+
         sendSuccess(res, result.data, result.message);
     } else {
         sendError(res, result.message || 'Google登入失敗', 401);
