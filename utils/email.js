@@ -7,8 +7,8 @@ const { SMTP_TO_EMAIL, SMTP_TO_PASSWORD } = process.env;
 
 const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
-    port: 587,
-    secure: false, // Port 587 需設為 false (STARTTLS)
+    port: 465,
+    secure: true, // 改用 465 SSL 連線
     service: 'Gmail',
     auth: {
         user: SMTP_TO_EMAIL,
