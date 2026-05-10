@@ -1,39 +1,60 @@
-import nodemailer from 'nodemailer';
-import dotenv from 'dotenv';
+import { Resend } from 'resend';
 import logger from './logger.js';
 
-// 指定要加載的 dotenv 檔案名稱
-const { SMTP_TO_EMAIL, SMTP_TO_PASSWORD } = process.env;
+const resend = new Resend(process.env.RESEND_API_KEY);
 
-const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true, // 改用 465 SSL 連線
-    service: 'Gmail',
-    auth: {
-        user: SMTP_TO_EMAIL,
-        pass: SMTP_TO_PASSWORD,
+/**
+ * 為了相容原本 nodemailer 的格式，我們封裝一個 transporter 物件
+ */
+const transporter = {
+    /**
+     * 發送郵件 (相容原本的參數格式)
+     * @param {Object} options 
+     * @param {string} options.to 收件人
+     * @param {string} options.subject 主旨
+     * @param {string} options.html HTML 內容
+     */
+    sendMail: async ({ to, subject, html }, callback) => {
+        try {
+            // 處理多個收件人 (原本用逗號分隔的字串)
+            const recipients = typeof to === 'string' ? to.split(',').map(s => s.trim()) : to;
+
+            const { data, error } = await resend.emails.send({
+                from: 'Taipei Date <onboarding@resend.dev>',
+                to: recipients,
+                subject: subject,
+                html: html,
+            });
+
+            if (error) {
+                throw new Error(error.message);
+            }
+
+            if (callback) callback(null, data);
+            return data;
+        } catch (err) {
+            logger.error(`Resend sendMail failed: ${err.message}`);
+            if (callback) callback(err, null);
+            throw err;
+        }
     },
-});
 
-// 驗証連線設定
-transporter.verify((error, success) => {
-    if (error) {
-        logger.error('SMTP server connection failed', error);
-    } else {
-        logger.info('SMTP server connected');
+    /**
+     * 相容原本的 verify 方法
+     */
+    verify: (callback) => {
+        if (!process.env.RESEND_API_KEY) {
+            const err = new Error('RESEND_API_KEY is missing');
+            logger.error('Resend verification failed', err);
+            if (callback) callback(err, null);
+            return;
+        }
+        logger.info('Resend API configuration verified');
+        if (callback) callback(null, true);
     }
-});
+};
 
-// 測試發信
-// transporter
-//     .sendMail({
-//         to: 'a123881@gmail.com',
-//         subject: 'sbuject',
-//         html: '<h1>hello2</h1>',
-//     })
-//     .then(() => {
-//         console.log('email sent');
-//     })
-//     .catch((ex) => console.error(ex));
+// 執行初始驗證
+transporter.verify();
+
 export default transporter;
